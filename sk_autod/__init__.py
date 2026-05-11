@@ -1,6 +1,7 @@
 from sk_autod.core.models import DiagnosisReport, Finding, Severity
 from sk_autod.core.runner import diagnose
 from sk_autod.reports.text import render_text
+from sk_autod.reports.json import render_json
 
 
 def quick_check(train_loss, val_loss) -> str:
@@ -37,4 +38,5 @@ __all__ = [
 	"Severity",
 	"diagnose",
 	"quick_check",
+	"render_json",
 ]
