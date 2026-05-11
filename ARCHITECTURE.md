@@ -105,6 +105,7 @@ class Severity(str, Enum):
     HIGH = "HIGH"           # Major issue, likely hurts performance
     MEDIUM = "MEDIUM"       # Noticeable issue, should address
     WARNING = "WARNING"     # Minor issue, good to know
+    INFO = "INFO"           # Informational, no action needed
 ```
 
 **Ordering:** `CRITICAL > HIGH > MEDIUM > WARNING`
@@ -114,16 +115,15 @@ class Severity(str, Enum):
 A single diagnostic issue:
 
 ```python
-@dataclass
+@dataclass(slots=True)
 class Finding:
     detector_name: str              # "Classic overfitting"
     severity: Severity              # CRITICAL, HIGH, etc.
-    signature: str                  # "Val loss rises while train loss falls"
-    logic: str                      # Detailed explanation of detection logic
-    fix_recommendation: str         # "Add dropout (p=0.3–0.5), ..."
     confidence: float               # 0.0–1.0 (how sure are we?)
-    affected_epoch: int | None      # Which epoch triggered this (optional)
-    metadata: dict                  # Detector-specific data (e.g., gap_size, duration)
+    message: str                    # "Validation loss increased while training loss decreased."
+    recommendation: str             # "Add dropout (p=0.3–0.5), ..."
+    epoch: int | None               # Which epoch triggered this (optional)
+    metadata: dict[str, Any]        # Detector-specific data (e.g., gap_size, duration)
 ```
 
 **Key design:**
@@ -136,18 +136,14 @@ class Finding:
 Container for all results:
 
 ```python
-@dataclass
+@dataclass(slots=True)
 class DiagnosisReport:
     findings: list[Finding]         # Sorted by severity, deduplicated
-    train_loss: np.ndarray          # Original input (unchanged)
-    val_loss: np.ndarray            # Original input (unchanged)
-    metadata: dict                  # Preprocessed stats, timings, etc.
-    processed_at: datetime          # When diagnosis was run
     
     def summary(self) -> str:
         """Return formatted text report."""
     
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Return JSON-serializable dictionary."""
     
     def to_html(self) -> str:
@@ -165,26 +161,24 @@ Normalizes and enriches raw input curves.
 #### Input Validation
 
 ```python
-def validate(train_loss, val_loss) -> tuple[np.ndarray, np.ndarray]:
-    """Validate and convert to numpy arrays."""
-    train = np.array(train_loss, dtype=np.float32)
-    val = np.array(val_loss, dtype=np.float32)
+def validate_curves(train_loss: Sequence[float], val_loss: Sequence[float]) -> None:
+    """Validate input curves (pure Python, no numpy required)."""
+    if train_loss is None or val_loss is None:
+        raise ValueError("train_loss and val_loss are required")
     
-    # Check: non-empty
-    if len(train) == 0:
-        raise ValueError("Empty train_loss")
+    if len(train_loss) == 0 or len(val_loss) == 0:
+        raise ValueError("train_loss and val_loss must not be empty")
+    
+    if len(train_loss) != len(val_loss):
+        raise ValueError("train_loss and val_loss must have the same length")
     
     # Check: minimum 5 epochs for meaningful detection
-    if len(train) < 5:
+    if len(train_loss) < 5:
         raise ValueError("Need at least 5 epochs of data")
     
-    # Check: no NaN or inf
-    if np.any(np.isnan(train)) or np.any(np.isinf(train)):
-        raise ValueError("NaN or inf values in train_loss")
-    if np.any(np.isnan(val)) or np.any(np.isinf(val)):
-        raise ValueError("NaN or inf values in val_loss")
-    
-    return train, val
+    # Check: no NaN or inf (using standard library)
+    if any(not isfinite(float(v)) for v in train_loss) or any(not isfinite(float(v)) for v in val_loss):
+        raise ValueError("Curves must contain only finite numeric values")
 ```
 
 #### Alignment
@@ -317,70 +311,41 @@ Example detector structure:
 
 ```python
 # sk_autod/detectors/overfitting.py
-import numpy as np
 from sk_autod.detectors.base import BaseDetector
-from sk_autod.models import Finding, Severity, DiagnosisReport
+from sk_autod.core.models import Finding, Severity
+from sk_autod.core.preprocessing import PreprocessedCurves
 
 class OverfittingDetector(BaseDetector):
     """Detect classic overfitting pattern (val↑ while train↓)."""
     
     name = "Classic overfitting"
-    default_severity = Severity.CRITICAL
     
-    def detect(self, report: DiagnosisReport) -> list[Finding]:
-        findings = []
+    def detect(self, curves: PreprocessedCurves) -> list[Finding]:
+        if len(curves.train_smooth) < 5:
+            return []
         
-        # Get preprocessed data
-        train_delta = report.metadata['train_delta']
-        val_delta = report.metadata['val_delta']
+        # Check last 3 epochs for divergence pattern
+        train_window = curves.train_smooth[-3:]
+        val_window = curves.val_smooth[-3:]
         
-        # Count epochs where val rises but train falls
-        overfitting_epochs = []
-        for i, (td, vd) in enumerate(zip(train_delta, val_delta)):
-            if td < 0 and vd > 0:  # train ↓, val ↑
-                overfitting_epochs.append(i + 1)  # Convert to epoch #
+        # Trigger if train falling while val rising
+        if train_window[0] > train_window[-1] and val_window[0] < val_window[-1]:
+            return [
+                Finding(
+                    detector_name=self.name,
+                    severity=Severity.CRITICAL,
+                    confidence=0.92,
+                    message="Validation loss increased while training loss decreased.",
+                    recommendation="Use dropout, regularization, or reduce model capacity.",
+                    epoch=len(curves.train_smooth) - 1,
+                )
+            ]
         
-        # Trigger if 3+ consecutive epochs of divergence
-        if self._is_consecutive(overfitting_epochs, min_length=3):
-            affected_epoch = overfitting_epochs[0]
-            
-            # Calculate confidence based on magnitude and duration
-            val_delta_subset = val_delta[affected_epoch-1:affected_epoch+3]
-            train_delta_subset = train_delta[affected_epoch-1:affected_epoch+3]
-            gap = np.mean(val_delta_subset - train_delta_subset)
-            
-            confidence = min(1.0, (abs(gap) / 0.5) * (len(overfitting_epochs) / 5))
-            
-            findings.append(Finding(
-                detector_name=self.name,
-                severity=Severity.CRITICAL,
-                signature="Val loss rises while train loss falls",
-                logic="Detected 3+ epochs where val_delta > 0 and train_delta < 0",
-                fix_recommendation="Add dropout (p=0.3–0.5), L2 regularisation, or reduce model capacity",
-                confidence=confidence,
-                affected_epoch=affected_epoch,
-                metadata={
-                    'duration': len(overfitting_epochs),
-                    'avg_gap': float(gap),
-                },
-            ))
-        
-        return findings
-    
-    @staticmethod
-    def _is_consecutive(indices: list[int], min_length: int = 3) -> bool:
-        """Check if indices contain min_length consecutive numbers."""
-        if len(indices) < min_length:
-            return False
-        for i in range(len(indices) - min_length + 1):
-            if all(indices[j+1] == indices[j] + 1 
-                   for j in range(i, i + min_length - 1)):
-                return True
-        return False
+        return []
 ```
 
 **Key patterns:**
-- Use preprocessed data from `report.metadata`
+- Use preprocessed data from `PreprocessedCurves` fields
 - Multiple confirmation rules (avoid false positives)
 - Confidence scoring based on magnitude + duration
 - Helpful, actionable fix recommendations
@@ -571,77 +536,73 @@ Output: ["Overfitting", "Underfitting"]  # Different causes
 ### Full Preprocessing Pipeline
 
 ```python
+@dataclass(slots=True)
+class PreprocessedCurves:
+    train_loss: list[float]
+    val_loss: list[float]
+    train_smooth: list[float]
+    val_smooth: list[float]
+    train_delta: list[float]
+    val_delta: list[float]
+    gap: list[float]
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
 class Preprocessor:
-    def __init__(self, ema_alpha: float = 0.3, rolling_window: int = 5):
+    def __init__(self, ema_alpha: float = 0.3):
         self.ema_alpha = ema_alpha
-        self.rolling_window = rolling_window
     
-    def preprocess(self, train_loss, val_loss) -> dict:
-        """Complete preprocessing pipeline."""
+    def preprocess(self, train_loss, val_loss) -> PreprocessedCurves:
+        """Complete preprocessing pipeline (pure Python)."""
         
-        # 1. Validate
-        train = np.array(train_loss, dtype=np.float32)
-        val = np.array(val_loss, dtype=np.float32)
-        self._validate(train, val)
+        # 1. Convert to float lists
+        train = [float(v) for v in train_loss]
+        val = [float(v) for v in val_loss]
         
-        # 2. Align (pad if needed)
-        train, val = self._align(train, val)
-        
-        # 3. Smooth (EMA)
+        # 2. Smooth (EMA)
         train_smooth = self._ema(train)
         val_smooth = self._ema(val)
         
-        # 4. Compute deltas
-        train_delta = np.diff(train_smooth)
-        val_delta = np.diff(val_smooth)
+        # 3. Compute deltas
+        train_delta = self._diff(train_smooth)
+        val_delta = self._diff(val_smooth)
         
-        # 5. Rolling statistics
-        stats = {
-            'train': self._rolling_stats(train_smooth),
-            'val': self._rolling_stats(val_smooth),
-            'train_delta': self._rolling_stats(train_delta),
-            'val_delta': self._rolling_stats(val_delta),
-        }
+        # 4. Compute gap
+        gap = [v - t for t, v in zip(train_smooth, val_smooth)]
         
-        return {
-            'train_loss': train,
-            'val_loss': val,
-            'train_smooth': train_smooth,
-            'val_smooth': val_smooth,
-            'train_delta': train_delta,
-            'val_delta': val_delta,
-            'stats': stats,
-            'num_epochs': len(train),
-        }
+        return PreprocessedCurves(
+            train_loss=train,
+            val_loss=val,
+            train_smooth=train_smooth,
+            val_smooth=val_smooth,
+            train_delta=train_delta,
+            val_delta=val_delta,
+            gap=gap,
+            metadata={
+                'train_mean': self._mean(train),
+                'val_mean': self._mean(val),
+                'train_std': self._std(train),
+                'val_std': self._std(val),
+            },
+        )
     
-    def _validate(self, train, val):
-        """Check inputs are valid."""
-        assert len(train) >= 5, "Need ≥5 epochs"
-        assert len(val) >= 5, "Need ≥5 epochs"
-        assert not np.any(np.isnan(train)), "NaN in train"
-        assert not np.any(np.isinf(train)), "Inf in train"
-        # ... etc for val
+    def _ema(self, values: list[float]) -> list[float]:
+        """Exponential moving average (pure Python)."""
+        smoothed = [values[0]]
+        for v in values[1:]:
+            smoothed.append(self.ema_alpha * v + (1 - self.ema_alpha) * smoothed[-1])
+        return smoothed
     
-    def _align(self, train, val):
-        """Pad shorter array to match longer."""
-        # ... see above
+    def _diff(self, values: list[float]) -> list[float]:
+        """Compute difference between consecutive values."""
+        return [curr - prev for prev, curr in zip(values, values[1:])]
     
-    def _ema(self, values):
-        """Exponential moving average."""
-        # ... see above
+    def _mean(self, values: list[float]) -> float:
+        return sum(values) / len(values)
     
-    def _rolling_stats(self, values, window=None):
-        """Compute rolling mean, std, min, max."""
-        window = window or self.rolling_window
-        return {
-            'mean': np.convolve(values, np.ones(window)/window, mode='valid'),
-            'std': np.array([np.std(values[i:i+window]) 
-                            for i in range(len(values)-window+1)]),
-            'min': np.array([np.min(values[i:i+window]) 
-                            for i in range(len(values)-window+1)]),
-            'max': np.array([np.max(values[i:i+window]) 
-                            for i in range(len(values)-window+1)]),
-        }
+    def _std(self, values: list[float]) -> float:
+        center = self._mean(values)
+        return (sum((v - center) ** 2 for v in values) / len(values)) ** 0.5
 ```
 
 ---
@@ -658,7 +619,7 @@ class Preprocessor:
    ```
 
 2. **Implement detect() with clear logic**
-   - Use preprocessed data: `report.metadata`
+   - Use preprocessed data: `curves.train_smooth`, `curves.val_delta`, etc.
    - Write multiple confirmation rules
    - Compute confidence (0.0–1.0)
    - Return list of Finding(s)
@@ -809,7 +770,9 @@ def test_overfitting_detector_positive():
     detector = OverfittingDetector()
     train, val = Curves.overfitting()
     
-    findings = detector.detect(train, val)
+    # Preprocess curves first
+    curves = Preprocessor().preprocess(train, val)
+    findings = detector.detect(curves)
     
     assert len(findings) == 1
     assert findings[0].severity == Severity.CRITICAL
@@ -820,7 +783,9 @@ def test_overfitting_detector_negative():
     detector = OverfittingDetector()
     train, val = Curves.well_trained()
     
-    findings = detector.detect(train, val)
+    # Preprocess curves first
+    curves = Preprocessor().preprocess(train, val)
+    findings = detector.detect(curves)
     
     assert len(findings) == 0
 ```
