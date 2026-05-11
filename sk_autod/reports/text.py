@@ -1,6 +1,15 @@
 from __future__ import annotations
 
-from sk_autod.core.models import DiagnosisReport
+from sk_autod.core.models import DiagnosisReport, Severity
+
+
+SEVERITY_EMOJIS = {
+    Severity.CRITICAL: "🔴",
+    Severity.HIGH: "🟠",
+    Severity.MEDIUM: "🟡",
+    Severity.WARNING: "🟡",
+    Severity.INFO: "🔵",
+}
 
 
 def _format_boxed_title(title: str) -> str:
@@ -21,10 +30,9 @@ def render_text(report: DiagnosisReport) -> str:
     lines = [_format_boxed_title("SK-AutoD Diagnosis Report")]
     for finding in report.findings:
         lines.append("")
-        header = f"{finding.severity.value}: {finding.detector_name}"
-        if finding.epoch is not None:
-            header += f""
-        lines.append(f"{header}")
+        emoji = SEVERITY_EMOJIS.get(finding.severity, "")
+        header = f"{emoji} {finding.severity.value}: {finding.detector_name}"
+        lines.append(header)
         lines.append(f"   Detected at epoch {finding.epoch if finding.epoch is not None else 'n/a'} ({_format_confidence(finding.confidence)} confidence)")
         lines.append(f"   {finding.message}")
         lines.append("")
