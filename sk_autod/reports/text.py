@@ -14,3 +14,4 @@ def render_text(report: DiagnosisReport) -> str:
         lines.append(f"  Problem: {finding.message}")
         lines.append(f"  Fix: {finding.recommendation}")
     return "\n".join(lines)
+

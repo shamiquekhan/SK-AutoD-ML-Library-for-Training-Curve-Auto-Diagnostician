@@ -6,6 +6,7 @@ from sk_autod.core.validation import validate_curves
 from sk_autod.detectors.lr_high import LRHighDetector
 from sk_autod.detectors.overfitting import OverfittingDetector
 from sk_autod.detectors.underfitting import UnderfittingDetector
+from sk_autod.detectors.early_stop import EarlyStopDetector
 
 
 def diagnose(train_loss, val_loss, detectors=None) -> DiagnosisReport:
@@ -15,6 +16,7 @@ def diagnose(train_loss, val_loss, detectors=None) -> DiagnosisReport:
     active_detectors = detectors or [
         OverfittingDetector(),
         LRHighDetector(),
+        EarlyStopDetector(),
         UnderfittingDetector(),
     ]
 
