@@ -1,0 +1,2 @@
+# Runtime dependencies are intentionally minimal for SK-AutoD.
+# The library currently relies on the Python standard library only.

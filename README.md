@@ -226,6 +226,24 @@ pytest tests/ -v
 
 ---
 
+## Project Layout
+
+This repository now includes the pieces you would expect from a polished open-source ML library:
+
+- [docs/](./docs/installation.md) for installation, quickstart, detectors, API reference, and architecture notes
+- [examples/](./examples/basic_usage.py) for runnable usage snippets
+- [notebooks/](./notebooks/sk_autod_demo.ipynb) for a minimal Jupyter walkthrough
+- [scripts/](./scripts/README.md) for maintenance and utility helpers
+- [benchmarks/](./benchmarks/README.md) for repeatable performance checks
+- [.github/workflows/tests.yml](./.github/workflows/tests.yml) for CI checks
+- [.github/workflows/lint.yml](./.github/workflows/lint.yml) for style and formatting checks
+- [.github/workflows/publish.yml](./.github/workflows/publish.yml) for tagged release publishing
+- [CHANGELOG.md](./CHANGELOG.md) for release notes
+- [Makefile](./Makefile) for common development commands
+- [requirements.txt](./requirements.txt) and [requirements-dev.txt](./requirements-dev.txt) for runtime and development dependencies
+
+---
+
 ## Roadmap
 
 ### v0.1.0 (Current)
