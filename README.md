@@ -30,7 +30,7 @@ Every ML practitioner spends hours staring at loss curves during training:
 ### Installation
 
 ```bash
-pip install curvedoctor
+pip install sk-autod
 ```
 
 ### Basic Usage
@@ -52,7 +52,7 @@ print(report.summary())
 **Output:**
 ```
 ═══════════════════════════════════════════════════════
-  CurveDoctor Diagnosis Report
+  SK-AutoD Diagnosis Report
 ═══════════════════════════════════════════════════════
 
 🔴 CRITICAL: Classic overfitting
@@ -104,8 +104,8 @@ from sk_autod import quick_check
 print(quick_check(train_loss, val_loss))  # → "[CRITICAL] Classic overfitting"
 
 # 3. In-training callback (v0.3+)
-from curvedoctor import CurveDoctorCallback
-cb = CurveDoctorCallback(min_epochs=10, print_live=True)
+from sk_autod import AutoDCallback
+cb = AutoDCallback(min_epochs=10, print_live=True)
 for epoch in range(100):
     # ... your training loop ...
     cb.on_epoch_end(epoch, train_loss, val_loss)
@@ -317,7 +317,7 @@ report = diagnose(train, val, detectors=[MyDetector()])
 A: v0.1 supports 1D loss arrays. Multi-task support in v0.3+.
 
 **Q: What if my curves are short (5 epochs)?**  
-A: CurveDoctor requires at least 5 epochs. For shorter runs, some detectors may not fire (e.g., early stopping needs history).
+A: SK-AutoD requires at least 5 epochs. For shorter runs, some detectors may not fire (e.g., early stopping needs history).
 
 **Q: Can I integrate this with my training pipeline?**  
 A: Yes! Callbacks coming in v0.3. For now:
@@ -355,12 +355,12 @@ See [LICENSE](./LICENSE) file for details.
 
 ## Citation
 
-If CurveDoctor helps your research, please cite:
+If SK-AutoD helps your research, please cite:
 
 ```bibtex
-@software{curvedoctor2026,
+@software{sk_autod2026,
   author = {Khan, Shamique},
-  title = {CurveDoctor: Auto-Diagnostic System for Training Curves},
+  title = {SK-AutoD: Auto-Diagnostic System for Training Curves},
   year = {2026},
   url = {https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician}
 }

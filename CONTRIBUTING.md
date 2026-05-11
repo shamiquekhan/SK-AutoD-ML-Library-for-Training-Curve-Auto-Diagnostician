@@ -62,7 +62,7 @@ Found a bug? Please open a GitHub issue with:
 - **Description:** Clear summary of the bug
 - **Steps to reproduce:** Exact code to trigger the bug
 - **Expected vs actual behavior:** What should happen vs what does happen
-- **Environment:** Python version, OS, CurveDoctor version
+- **Environment:** Python version, OS, SK-AutoD version
 - **Traceback:** Full error message (if applicable)
 
 **Example:**
@@ -74,13 +74,13 @@ When I call diagnose() with 7 epochs of data, I get a ValueError.
 
 Steps to reproduce:
 ```python
-from curvedoctor import diagnose
+from sk_autod import diagnose
 train = [2.3, 1.9, 1.4, 0.9, 0.5, 0.3, 0.15]
 val = [2.4, 2.0, 1.8, 1.9, 2.3, 2.8, 3.4]
 diagnose(train, val)  # Crashes here
 ```
 
-Environment: Python 3.11, Windows 10, CurveDoctor 0.1.0
+Environment: Python 3.11, Windows 10, SK-AutoD 0.1.0
 ```
 
 ### 💡 Feature Requests
@@ -96,7 +96,7 @@ Have an idea? Open an issue with:
 Title: Support multi-metric diagnosis (loss + accuracy)
 
 Motivation:
-Currently CurveDoctor only supports loss curves. Many projects also track
+Currently SK-AutoD only supports loss curves. Many projects also track
 accuracy, and diagnosing both together would catch issues like:
 - Loss converging but accuracy stuck
 - Accuracy oscillating while loss smooth
@@ -171,8 +171,8 @@ class YourDetector(BaseDetector):
 
 #### Framework Integrations
 
-- PyTorch callback: `CurveDoctorCallback`
-- Keras callback: `KerasCurveDoctorCallback`
+- PyTorch callback: `AutoDCallback`
+- Keras callback: `KerasAutoDCallback`
 - Weights & Biases: Auto-log findings
 - MLflow: Track diagnostic metadata
 
@@ -212,16 +212,16 @@ Branch naming:
 
 ```bash
 # Format code
-black curvedoctor/ tests/
+black sk_autod/ tests/
 
 # Lint
-ruff check curvedoctor/ tests/
+ruff check sk_autod/ tests/
 
 # Type check
-mypy curvedoctor/
+mypy sk_autod/
 
 # Run tests
-pytest tests/ -v --cov=curvedoctor
+pytest tests/ -v --cov=sk_autod
 
 # Expected: 80%+ coverage
 ```
@@ -290,13 +290,13 @@ We follow [PEP 8](https://www.python.org/dev/peps/pep-0008/) with these tools:
 #### Black (Code Formatting)
 
 ```bash
-black curvedoctor/ tests/
+black sk_autod/ tests/
 ```
 
 #### Ruff (Linting)
 
 ```bash
-ruff check curvedoctor/ tests/ --fix
+ruff check sk_autod/ tests/ --fix
 ```
 
 Configuration (`.ruff.toml`):
@@ -310,7 +310,7 @@ select = ["E", "F", "W"]
 #### MyPy (Type Checking)
 
 ```bash
-mypy curvedoctor/
+mypy sk_autod/
 ```
 
 All public functions should have type hints:
@@ -388,7 +388,7 @@ class CurveFixtures:
         return train, val
 
 # tests/test_overfitting.py
-from curvedoctor.detectors.overfitting import OverfittingDetector
+from sk_autod.detectors.overfitting import OverfittingDetector
 from tests.fixtures import CurveFixtures
 
 def test_detects_overfitting():
@@ -418,7 +418,7 @@ pytest tests/ -v
 pytest tests/test_overfitting.py -v
 
 # Run with coverage
-pytest tests/ --cov=curvedoctor --cov-report=html
+pytest tests/ --cov=sk_autod --cov-report=html
 
 # Run and stop on first failure
 pytest tests/ -x
@@ -465,7 +465,7 @@ def diagnose(
         ValueError: If input validation fails.
     
     Examples:
-        >>> from curvedoctor import diagnose
+        >>> from sk_autod import diagnose
         >>> train = [2.3, 1.9, 1.4, 0.9, 0.5, 0.3, 0.15]
         >>> val = [2.4, 2.0, 1.8, 1.9, 2.3, 2.8, 3.4]
         >>> report = diagnose(train, val)
@@ -577,6 +577,6 @@ Contributors are recognized in:
 
 ## Thank You! 🙏
 
-Every contribution makes CurveDoctor better. Whether it's code, documentation, bug reports, or ideas — we appreciate your help!
+Every contribution makes SK-AutoD better. Whether it's code, documentation, bug reports, or ideas — we appreciate your help!
 
 Let's build something amazing together. 🚀

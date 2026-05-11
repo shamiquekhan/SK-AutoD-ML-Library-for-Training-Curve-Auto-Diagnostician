@@ -2,7 +2,7 @@
 
 **Complete technical design and implementation guide for developers.**
 
-This document explains how CurveDoctor works internally, the design decisions, and how to extend it.
+This document explains how SK-AutoD works internally, the design decisions, and how to extend it.
 
 ---
 
@@ -274,7 +274,7 @@ Abstract interface for all detectors:
 
 ```python
 from abc import ABC, abstractmethod
-from curvedoctor.models import Finding, Severity, DiagnosisReport
+from sk_autod.models import Finding, Severity, DiagnosisReport
 
 class BaseDetector(ABC):
     """Template for all diagnostic detectors."""
@@ -678,7 +678,7 @@ class Preprocessor:
 
 5. **Register in runner**
    ```python
-   # curvedoctor/runner.py
+   # sk_autod/runner.py
    def _get_default_detectors(self):
        return [
            # ... existing detectors ...
@@ -914,7 +914,7 @@ class MyFormatter:
 ### Framework Callbacks (v0.3+)
 
 ```python
-class CurveDoctorCallback:
+class AutoDCallback:
     def on_epoch_end(self, epoch, train_loss, val_loss):
         report = diagnose(train_loss, val_loss)
         # Act on findings
@@ -948,7 +948,7 @@ When tuning detector thresholds:
 ```python
 import logging
 
-logger = logging.getLogger('curvedoctor')
+logger = logging.getLogger('sk_autod')
 logger.debug(f"Preprocessing {len(train)} epochs")
 logger.debug(f"Detector {detector.name} found {len(findings)} issues")
 ```
