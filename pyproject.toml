@@ -7,18 +7,51 @@ name = "sk-autod"
 version = "0.1.0"
 description = "Auto-diagnosis for training curves"
 readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [{ name = "Shamique Khan" }]
+keywords = ["machine-learning", "deep-learning", "training-curves", "diagnostics", "pytorch", "keras"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = []
 
 [project.scripts]
 sk-autod = "sk_autod.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0", "build", "twine", "ruff", "mypy"]
+dev = ["pytest>=7.0", "pytest-cov>=4.0", "build", "twine", "ruff", "mypy"]
+examples = ["numpy>=1.24"]
+
+[project.urls]
+Homepage = "https://github.com/shamiquekhan/sk-autod"
+Documentation = "https://github.com/shamiquekhan/sk-autod#readme"
+Repository = "https://github.com/shamiquekhan/sk-autod"
+Issues = "https://github.com/shamiquekhan/sk-autod/issues"
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.packages.find]
 include = ["sk_autod*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true

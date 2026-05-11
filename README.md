@@ -4,7 +4,7 @@
 
 Stop manually eyeballing loss curves. SK-AutoD analyzes your training data and instantly detects 10+ common pathologies: overfitting, exploding gradients, learning rate issues, underfitting, and more.
 
-[![PyPI version](https://img.shields.io/badge/pypi-v0.1.0-blue)](https://pypi.org/project/sk-autod)
+[![PyPI version](https://img.shields.io/pypi/v/sk-autod?color=blue)](https://pypi.org/project/sk-autod)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-brightgreen)](https://www.python.org)
 
@@ -30,7 +30,11 @@ Every ML practitioner spends hours staring at loss curves during training:
 ### Installation
 
 ```bash
+# From PyPI (once published)
 pip install sk-autod
+
+# From source (recommended for now)
+pip install git+https://github.com/shamiquekhan/sk-autod.git
 ```
 
 ### Basic Usage
@@ -207,17 +211,11 @@ report = diagnose(train, val)
 
 ## Installation & Setup
 
-### From PyPI (recommended)
+### From Source (recommended until PyPI publication)
 
 ```bash
-pip install sk-autod
-```
-
-### From Source (development)
-
-```bash
-git clone https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician.git
-cd SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician
+git clone https://github.com/shamiquekhan/sk-autod.git
+cd sk-autod
 pip install -e ".[dev]"
 
 # Run tests
@@ -240,7 +238,6 @@ This repository now includes the pieces you would expect from a polished open-so
 - [.github/workflows/publish.yml](./.github/workflows/publish.yml) for tagged release publishing
 - [CHANGELOG.md](./CHANGELOG.md) for release notes
 - [Makefile](./Makefile) for common development commands
-- [requirements.txt](./requirements.txt) and [requirements-dev.txt](./requirements-dev.txt) for runtime and development dependencies
 
 ---
 
@@ -365,9 +362,9 @@ See [LICENSE](./LICENSE) file for details.
 
 ## Contact & Support
 
-- **GitHub Issues:** [Report bugs or request features](https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/issues)
+- **GitHub Issues:** [Report bugs or request features](https://github.com/shamiquekhan/sk-autod/issues)
 - **Twitter:** [@shamiquekhan](https://twitter.com/shamiquekhan)
-- **Email:** shamique@example.com
+- **Email:** shamique.khan@outlook.com
 
 ---
 
@@ -380,15 +377,11 @@ If SK-AutoD helps your research, please cite:
   author = {Khan, Shamique},
   title = {SK-AutoD: Auto-Diagnostic System for Training Curves},
   year = {2026},
-  url = {https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician}
+  url = {https://github.com/shamiquekhan/sk-autod}
 }
 ```
 
 ---
-
-## Star History
-
-[![Star History Chart](https://api.github.com/repos/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/stargazers)](https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician)
 
 ---
 
@@ -396,6 +389,6 @@ If SK-AutoD helps your research, please cite:
 
 **SK-AutoD** — Because your time is more valuable than manual eyeballing. 🚀
 
-[⭐ Star us on GitHub](https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician) if you find this helpful!
+[⭐ Star us on GitHub](https://github.com/shamiquekhan/sk-autod) if you find this helpful!
 
 </div>

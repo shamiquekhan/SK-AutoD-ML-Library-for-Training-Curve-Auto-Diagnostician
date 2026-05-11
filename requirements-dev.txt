@@ -1,5 +1,0 @@
-pytest>=7.0
-build
-twine
-ruff
-mypy
