@@ -33,7 +33,7 @@ Every ML practitioner spends hours staring at loss curves during training:
 
 ```bash
 # From PyPI (once published)
-pip install SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician
+pip install sk-autod
 
 # From source (recommended for now)
 pip install git+https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician.git
@@ -42,7 +42,7 @@ pip install git+https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training
 ### Basic Usage
 
 ```python
-from SK_AutoD import diagnose
+from sk_autod import diagnose
 
 # Your training curves
 train_loss = [2.3, 1.9, 1.4, 0.9, 0.5, 0.3, 0.15]
@@ -58,7 +58,7 @@ print(report.summary())
 **Output:**
 ```
 ═══════════════════════════════════════════════════════
-  SK-AutoD Diagnosis Report
+  sk_autod Diagnosis Report
 ═══════════════════════════════════════════════════════
 
 CRITICAL: Classic overfitting
@@ -106,11 +106,11 @@ data = report.to_dict()           # → JSON-serializable dict
 html = report.to_html()           # → standalone HTML (v0.2+)
 
 # 2. One-liner for notebooks
-from SK_AutoD import quick_check
+from sk_autod import quick_check
 print(quick_check(train_loss, val_loss))  # → "[CRITICAL] Classic overfitting"
 
 # 3. In-training callback (v0.3+)
-from SK_AutoD import AutoDCallback
+from sk_autod import AutoDCallback
 cb = AutoDCallback(min_epochs=10, print_live=True)
 for epoch in range(100):
     # ... your training loop ...
@@ -160,16 +160,16 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete design details.
 
 ```bash
 # Command-line diagnosis
-SK-AutoD diagnose \
+sk_autod diagnose \
   --train-loss 2.3 1.9 1.4 0.9 0.5 0.3 0.15 \
   --val-loss 2.4 2.0 1.8 1.9 2.3 2.8 3.4 \
   --output json
 
 # From CSV files
-SK-AutoD diagnose --train-file train_losses.csv --val-file val_losses.csv
+sk_autod diagnose --train-file train_losses.csv --val-file val_losses.csv
 
 # From stdin (pipe-friendly)
-echo "2.3 1.9 1.4 0.9" | SK-AutoD diagnose --train-loss -
+echo "2.3 1.9 1.4 0.9" | sk_autod diagnose --train-loss -
 ```
 
 ---
@@ -240,36 +240,6 @@ This repository now includes the pieces you would expect from a polished open-so
 - [.github/workflows/publish.yml](./.github/workflows/publish.yml) for tagged release publishing
 - [CHANGELOG.md](./CHANGELOG.md) for release notes
 - [Makefile](./Makefile) for common development commands
-
----
-
-## Roadmap
-
-### v0.1.0 (Current)
-- Core 5 detectors (overfitting, LR issues, early stopping)
-- Text output + CLI
-- Basic Python API
-- Unit tests (80%+ coverage)
-
-### v0.2.0 (May 2026)
-- All 10 detectors
-- JSON + HTML output
-- Embedded loss curve visualization
-
-### v0.3.0 (June 2026)
-- PyTorch callback
-- Keras callback
-- Jupyter notebook integration
-
-### v0.4.0 (July 2026)
-- Weights & Biases integration
-- MLflow support
-- Adaptive thresholds
-
-### v1.0.0 (August 2026)
-- Stable API guarantee
-- Full documentation
--  100% test coverage
 
 ---
 
@@ -366,7 +336,7 @@ See [LICENSE](./LICENSE) file for details.
 
 - **GitHub Issues:** [Report bugs or request features](https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/issues)
 - **Twitter:** [@shamiquekhan](https://twitter.com/shamiquekhan)
-- **Email:** shamique.khan@outlook.com
+- **Email:** shamiquekhan18@gmail.com
 
 ---
 
