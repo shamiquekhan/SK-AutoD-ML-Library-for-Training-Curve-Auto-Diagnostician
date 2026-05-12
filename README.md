@@ -8,7 +8,7 @@ Stop manually eyeballing loss curves. SK-AutoD analyzes your training data and i
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-brightgreen)](https://www.python.org)
 
-[Website (local preview)](https://shamiquekhan.github.io/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/)
+[Website For Tutorial and documentation](https://shamiquekhan.github.io/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/)
 
 ---
 
