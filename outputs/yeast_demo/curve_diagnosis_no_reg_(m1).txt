@@ -1,0 +1,3 @@
+SK-AutoD Diagnosis Report:
+- [Severity.HIGH] LR too high: Loss oscillates without a stable downward trend.
+- [Severity.WARNING] Missed early stopping: Validation loss had an earlier minimum that was not used.

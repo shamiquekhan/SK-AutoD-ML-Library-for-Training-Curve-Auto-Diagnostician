@@ -28,7 +28,7 @@ import random
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple  # Python 3.9+ could use built-in dict, list, tuple
 
 import numpy as np
 import pandas as pd
@@ -47,12 +47,12 @@ if str(REPO_ROOT) not in sys.path:
 from sk_autod import diagnose
 
 
-TARGET_COL = "name"
+DEFAULT_TARGET_COL = "name"
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_DATA_PATH = SCRIPT_DIR / "yeast.csv"
 DEFAULT_OUTPUT_DIR = "outputs"
 DEFAULT_SEED = 42
-DEFAULT_EPOCHS = 1000
+DEFAULT_EPOCHS = 100  # Reduced from 1000 for faster demo runs
 DEFAULT_BATCH_SIZE = 32
 DEFAULT_HIDDEN_DIM = 32
 DEFAULT_LR = 1e-2
@@ -144,18 +144,18 @@ class YeastMLP(nn.Module):
         return self.net(x)
 
 
-def load_and_prepare_data(data_path: str) -> DatasetBundle:
+def load_and_prepare_data(data_path: str, target_col: str = DEFAULT_TARGET_COL) -> DatasetBundle:
     resolved_data_path = resolve_data_path(data_path)
     log_step(f"Loading dataset from {resolved_data_path}")
     df = pd.read_csv(resolved_data_path)
 
-    if TARGET_COL not in df.columns:
-        raise ValueError(f"Expected target column '{TARGET_COL}' in {resolved_data_path}")
+    if target_col not in df.columns:
+        raise ValueError(f"Expected target column '{target_col}' in {resolved_data_path}. Found columns: {list(df.columns)}")
 
-    log_step(f"Found target column '{TARGET_COL}' and {len(df.columns) - 1} feature columns")
+    log_step(f"Found target column '{target_col}' and {len(df.columns) - 1} feature columns")
 
-    X = df.drop(columns=[TARGET_COL])
-    y = df[TARGET_COL]
+    X = df.drop(columns=[target_col])
+    y = df[target_col]
 
     label_encoder = LabelEncoder()
     y_encoded = label_encoder.fit_transform(y)
@@ -394,7 +394,8 @@ def build_results_table(results: List[ModelResult]) -> pd.DataFrame:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Yeast multiclass classification with regularization.")
-    parser.add_argument("--data", type=str, default=str(DEFAULT_DATA_PATH), help="Path to yeast.csv")
+    parser.add_argument("--data", type=str, default=str(DEFAULT_DATA_PATH), help="Path to dataset CSV")
+    parser.add_argument("--target-col", type=str, default=DEFAULT_TARGET_COL, help="Name of target column")
     parser.add_argument("--output-dir", type=str, default=DEFAULT_OUTPUT_DIR, help="Directory for plots and checkpoints")
     parser.add_argument("--epochs", type=int, default=DEFAULT_EPOCHS, help="Training epochs")
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help="Mini-batch size")
@@ -415,7 +416,7 @@ def main() -> None:
     log_step(f"Output directory ready at {output_dir}")
 
     log_step("Preparing dataset")
-    bundle = load_and_prepare_data(args.data)
+    bundle = load_and_prepare_data(args.data, target_col=args.target_col)
     print(f"Train set: {bundle.X_train.shape}")
     print(f"Validation set: {bundle.X_val.shape}")
     print(f"Test set: {bundle.X_test.shape}")

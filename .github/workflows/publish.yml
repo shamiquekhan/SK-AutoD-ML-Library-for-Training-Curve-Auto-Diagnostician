@@ -5,6 +5,10 @@ on:
     tags:
       - "v*"
 
+permissions:
+  id-token: write  # Required for Trusted Publishing
+  contents: read
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -31,5 +35,3 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_TOKEN }}

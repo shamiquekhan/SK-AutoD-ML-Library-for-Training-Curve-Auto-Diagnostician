@@ -16,5 +16,5 @@ All notable changes to SK-AutoD follow [Keep a Changelog](https://keepachangelog
 ### Changed
 - Initial public release
 
-[Unreleased]: https://github.com/shamiquekhan/sk-autod/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/shamiquekhan/sk-autod/releases/tag/v0.1.0
+[Unreleased]: https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/releases/tag/v0.1.0

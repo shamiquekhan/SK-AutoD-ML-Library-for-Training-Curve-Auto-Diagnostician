@@ -1,0 +1,3 @@
+SK-AutoD Diagnosis Report:
+- [Severity.HIGH] LR too high: Loss oscillates without a stable downward trend.
+- [Severity.MEDIUM] Label noise floor: Loss has flattened above a suspiciously high floor.

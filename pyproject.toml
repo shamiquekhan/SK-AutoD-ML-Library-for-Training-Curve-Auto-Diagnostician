@@ -33,16 +33,16 @@ dev = ["pytest>=7.0", "pytest-cov>=4.0", "build", "twine", "ruff", "mypy"]
 examples = ["numpy>=1.24"]
 
 [project.urls]
-Homepage = "https://github.com/shamiquekhan/sk-autod"
-Documentation = "https://github.com/shamiquekhan/sk-autod#readme"
-Repository = "https://github.com/shamiquekhan/sk-autod"
-Issues = "https://github.com/shamiquekhan/sk-autod/issues"
+Homepage = "https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician"
+Documentation = "https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician#readme"
+Repository = "https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician"
+Issues = "https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/issues"
 
 [tool.setuptools]
-include-package-data = true
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-include = ["sk_autod*"]
+where = ["src"]
 
 [tool.ruff]
 line-length = 100
