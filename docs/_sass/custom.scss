@@ -1,0 +1,12 @@
+// Custom overrides for SK-AutoD site
+// Just the Docs uses CSS variables — override them here
+
+// Make inline code stand out a bit more
+code {
+  font-size: 0.875em;
+}
+
+// Slightly larger body font
+.main-content {
+  font-size: 16px;
+}
