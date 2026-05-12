@@ -10,7 +10,7 @@ Contributions are welcome — bug reports, new detectors, integrations, and docs
 ## Getting started
 
 ```bash
-git clone https://github.com/shamiquekhan/sk-autod.git
+git clone https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician.git
 cd sk-autod
 pip install -e ".[dev]"
 ```

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SK-AutoD — Tutorial</title>
+<meta name="description" content="Step-by-step tutorial for getting started with SK-AutoD.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Instrument+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#F5F3EE;--bg1:#EFECEA;--bg2:#E8E4DF;--surface:#fff;--border:#DDD9D3;--border2:#C9C4BD;--text:#1A1A18;--muted:#837F79;--muted2:#6B6762;--accent:#2D4A36;--accent2:#3D6349;--accent-l:rgba(45,74,54,.07);--mono:'JetBrains Mono',monospace;--body:'Instrument Sans',sans-serif;--display:'Cormorant',serif}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.container{max-width:1120px;margin:0 auto;padding:0 32px}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(245,243,238,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:56px;max-width:1120px;margin:0 auto;padding:0 32px}
+.nav-logo{font-family:var(--display);font-size:20px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:9px;letter-spacing:.01em}
+.nav-logo-mark{width:22px;height:22px;border:1.5px solid var(--accent);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--accent);font-weight:500;font-family:var(--mono)}
+.nav-links{display:flex;align-items:center;gap:2px;overflow:auto;white-space:nowrap}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:13px;padding:5px 12px;border-radius:5px;transition:color .15s,background .15s}
+.nav-links a:hover{color:var(--text);background:var(--bg2)}
+.nav-cta{background:var(--accent)!important;color:#F5F3EE!important;font-weight:500!important;padding:6px 16px!important}
+.nav-cta:hover{background:var(--accent2)!important}
+.page-hero{padding:132px 0 44px;border-bottom:1px solid var(--border)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:42px;align-items:end}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+.eyebrow::before{content:'';width:18px;height:1px;background:var(--accent)}
+h1,h2,h3{font-family:var(--display);font-weight:500;letter-spacing:-.01em}
+h1{font-size:clamp(2.6rem,4vw,4.2rem);line-height:1.06;max-width:10ch}
+.hero-copy{color:var(--muted);font-size:16px;line-height:1.75;max-width:62ch;margin-top:16px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:5px;font-size:13.5px;font-weight:500;text-decoration:none;transition:all .15s;border:none;cursor:pointer}
+.btn-primary{background:var(--accent);color:#F5F3EE}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.panel-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}
+.panel{border:1px solid var(--border);background:linear-gradient(180deg,#fff,var(--bg1));border-radius:10px;padding:16px 16px 14px}
+.panel h3{font-size:1.15rem;margin-bottom:6px}
+.panel p{color:var(--muted);font-size:13.5px;line-height:1.7}
+.steps{padding:44px 0 96px}
+.step{display:grid;grid-template-columns:72px 1fr;gap:18px;align-items:start;margin-bottom:22px}
+.step-num{width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:16px;font-weight:500;flex-shrink:0;margin-top:4px}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 22px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+.step-card h2{font-size:clamp(1.55rem,2vw,2rem);line-height:1.15;margin-bottom:8px}
+.step-copy{color:var(--muted);font-size:14px;line-height:1.75;max-width:68ch;margin-bottom:14px}
+.code{background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.75;color:var(--text2);overflow:auto;white-space:pre}
+.checklist{display:grid;gap:10px;margin-top:14px}
+.check{display:grid;grid-template-columns:180px 1fr;gap:16px;padding:10px 0;border-bottom:1px solid var(--border);align-items:baseline}
+.check:last-child{border-bottom:none}
+.check kbd{font-family:var(--mono);font-size:12px;color:var(--accent);background:none}
+.check p{color:var(--muted);font-size:13.5px}
+.accent-box{border-left:3px solid var(--accent);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-top:16px}
+.accent-box strong{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+footer{padding:42px 0;border-top:1px solid var(--border);background:var(--bg1);color:var(--muted);font-family:var(--mono);font-size:12px;text-align:center}
+.footer-links{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-bottom:10px}
+.footer-links a{text-decoration:none;color:var(--muted2)}
+.footer-links a:hover{color:var(--accent)}
+@media (max-width:920px){.hero-grid{grid-template-columns:1fr}.panel-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:680px){.container{padding:0 20px}.nav-inner{padding:0 20px}.step{grid-template-columns:1fr}.step-num{width:46px;height:46px}.panel-grid{grid-template-columns:1fr}.check{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo"><span class="nav-logo-mark">Rx</span>SK-AutoD</a>
+    <div class="nav-links">
+      <a href="index.html#features">Features</a>
+      <a href="index.html#detectors">Detectors</a>
+      <a href="docs.html">Docs</a>
+      <a href="tutorial.html">Tutorial</a>
+      <a href="index.html#examples">Examples</a>
+      <a href="index.html#install" class="nav-cta">Install</a>
+    </div>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">Tutorial</div>
+        <h1>Go from install to first diagnosis in a few minutes.</h1>
+        <p class="hero-copy">This walkthrough uses the same curve examples and API patterns that the repository documents in README, quickstart, and CLI usage. Follow it once and you’ll know how to use the package in notebooks, scripts, and training loops.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#step-1">Start tutorial</a>
+          <a class="btn btn-ghost" href="docs.html">Read docs</a>
+        </div>
+      </div>
+      <div class="panel-grid">
+        <div class="panel"><h3>Install</h3><p>Use <code>pip install sk-autod</code> or install from source for development.</p></div>
+        <div class="panel"><h3>Diagnose</h3><p>Call <code>diagnose(train_loss, val_loss)</code> on your loss arrays.</p></div>
+        <div class="panel"><h3>Act</h3><p>Review the findings, then change LR, capacity, regularization, or early stopping.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="steps">
+  <div class="container">
+    <div class="step" id="step-1">
+      <div class="step-num">1</div>
+      <div class="step-card">
+        <div class="eyebrow">Install</div>
+        <h2>Get the package ready.</h2>
+        <p class="step-copy">The repository’s installation docs target Python 3.10+ and recommend a simple pip install for end users.</p>
+        <div class="code">pip install sk-autod</div>
+        <div class="accent-box"><strong>For source installs</strong>Use <code>pip install -e ".[dev]"</code> when you want tests, linting, or local editing.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-card">
+        <div class="eyebrow">Quick diagnosis</div>
+        <h2>Run your first curve through the engine.</h2>
+        <p class="step-copy">The canonical example from the repo uses a steadily falling training curve and a diverging validation curve, which should produce an overfitting finding.</p>
+        <div class="code">from sk_autod import diagnose
+
+train_loss = [2.3, 1.9, 1.4, 0.9, 0.5, 0.3, 0.15]
+val_loss   = [2.4, 2.0, 1.8, 1.9, 2.3, 2.8, 3.4]
+
+report = diagnose(train_loss, val_loss)
+print(report.summary())</div>
+        <div class="checklist">
+          <div class="check"><kbd>report.findings</kbd><p>Use this for structured access to the issues the detector found.</p></div>
+          <div class="check"><kbd>report.to_dict()</kbd><p>Best for logging, APIs, or any JSON-friendly output.</p></div>
+          <div class="check"><kbd>report.to_html()</kbd><p>Creates a shareable report artifact for notebooks or review.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-card">
+        <div class="eyebrow">One-liner</div>
+        <h2>Use the notebook-friendly shortcut when you only need a summary.</h2>
+        <p class="step-copy">The quick-start guide includes a compact check function for terminal and notebook workflows.</p>
+        <div class="code">from sk_autod import quick_check
+print(quick_check(train_loss, val_loss))</div>
+        <div class="accent-box"><strong>Good fit</strong>This is the fastest way to surface whether the curve looks healthy, overfitted, noisy, or stalled.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-card">
+        <div class="eyebrow">Training loop</div>
+        <h2>Embed SK-AutoD while training.</h2>
+        <p class="step-copy">The README and guide docs both point to a periodic check pattern that fits directly into your epoch loop.</p>
+        <div class="code">train_losses, val_losses = [], []
+
+for epoch in range(100):
+    # ... your training step ...
+    train_losses.append(train_loss_this_epoch)
+    val_losses.append(val_loss_this_epoch)
+
+    if epoch % 10 == 0 and epoch >= 5:
+        print(quick_check(train_losses, val_losses))</div>
+        <div class="accent-box"><strong>Why this works</strong>You do not need a framework integration to get value. The package works on raw arrays, so it can sit beside PyTorch, Keras, or a custom loop.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-card">
+        <div class="eyebrow">Custom detectors</div>
+        <h2>Extend the library with your own signal.</h2>
+        <p class="step-copy">Custom detectors are part of the documented API. Keep them deterministic and focused on one pathology.</p>
+        <div class="code">from sk_autod.detectors.base import BaseDetector
+from sk_autod.core.models import Finding, Severity
+
+class MyDetector(BaseDetector):
+    name = "my_custom_issue"
+
+    def detect(self, report):
+        if report.train_loss[-1] > 1.0:
+            return [Finding(
+                detector_name=self.name,
+                severity=Severity.MEDIUM,
+                confidence=0.8,
+                message="Final training loss is still high.",
+                recommendation="Train longer or increase model capacity.",
+            )]
+        return []</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-card">
+        <div class="eyebrow">CLI</div>
+        <h2>Use the same engine from the terminal.</h2>
+        <p class="step-copy">The CLI mirrors the Python API and is useful for scripts, ad hoc checks, and CI jobs that need a fast pass/fail signal.</p>
+        <div class="code">sk-autod diagnose \
+  --train-loss 2.3 1.9 1.4 0.9 0.5 0.3 0.15 \
+  --val-loss   2.4 2.0 1.8 1.9 2.3 2.8 3.4 \
+  --output json</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">7</div>
+      <div class="step-card">
+        <div class="eyebrow">What to watch for</div>
+        <h2>Let the findings drive the next experiment.</h2>
+        <p class="step-copy">The repository’s detector table maps common failure modes to concrete next actions. Use that as your iteration loop.</p>
+        <div class="checklist">
+          <div class="check"><kbd>Overfitting</kbd><p>Dropout, L2 regularization, less capacity.</p></div>
+          <div class="check"><kbd>Exploding gradients</kbd><p>Gradient clipping and lower learning rate.</p></div>
+          <div class="check"><kbd>Underfitting</kbd><p>Train longer or increase model size.</p></div>
+          <div class="check"><kbd>Slow convergence</kbd><p>Raise LR or adjust the schedule.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="docs.html">Docs</a>
+    <a href="tutorial.html">Tutorial</a>
+  </div>
+  © 2026 SK-AutoD. Diagnose curves, then change one thing at a time.
+</footer>
+</body>
+</html>

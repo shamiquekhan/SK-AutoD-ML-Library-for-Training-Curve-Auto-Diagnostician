@@ -8,6 +8,8 @@ Stop manually eyeballing loss curves. SK-AutoD analyzes your training data and i
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-brightgreen)](https://www.python.org)
 
+[Website (local preview)](website/index.html)
+
 ---
 
 ## The Problem
@@ -31,7 +33,7 @@ Every ML practitioner spends hours staring at loss curves during training:
 
 ```bash
 # From PyPI (once published)
-pip install sk-autod
+pip install SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician
 
 # From source (recommended for now)
 pip install git+https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician.git
@@ -40,7 +42,7 @@ pip install git+https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training
 ### Basic Usage
 
 ```python
-from sk_autod import diagnose
+from SK_AutoD import diagnose
 
 # Your training curves
 train_loss = [2.3, 1.9, 1.4, 0.9, 0.5, 0.3, 0.15]
@@ -59,7 +61,7 @@ print(report.summary())
   SK-AutoD Diagnosis Report
 ═══════════════════════════════════════════════════════
 
-🔴 CRITICAL: Classic overfitting
+CRITICAL: Classic overfitting
    Detected at epoch 4 (94% confidence)
    Val loss rose while train loss fell for 3+ consecutive epochs.
    
@@ -73,28 +75,28 @@ Summary: 1 critical issue found.
 
 ## Features
 
-### 🔍 10 Diagnostic Detectors (v0.1.0+)
+### 10 Diagnostic Detectors (v0.1.0+)
 
 | Detector | Severity | Description |
 |----------|----------|-------------|
-| **Classic overfitting** | 🔴 CRITICAL | Val loss rises while train loss falls |
-| **Exploding gradient** | 🔴 CRITICAL | Loss spikes >300% in a single epoch |
-| **LR too high** | 🟠 HIGH | Loss oscillates without clear downtrend |
-| **LR too low** | 🟡 MEDIUM | Loss decreases extremely slowly |
-| **Underfitting** | 🟠 HIGH | Both losses plateau at high values |
-| **Dying ReLU proxy** | 🟠 HIGH | Loss flatlines early at high value |
-| **Noisy training** | 🟡 MEDIUM | Jagged loss with frequent up-down flips |
-| **Data leakage proxy** | 🟠 HIGH | Val loss consistently lower than train |
-| **Missed early stopping** | 🟡 WARNING | Val minimum not used as final checkpoint |
-| **Label noise floor** | 🟡 MEDIUM | Loss can't drop below suspiciously high threshold |
+| **Classic overfitting** | CRITICAL | Val loss rises while train loss falls |
+| **Exploding gradient** | CRITICAL | Loss spikes >300% in a single epoch |
+| **LR too high** | HIGH | Loss oscillates without clear downtrend |
+| **LR too low** | MEDIUM | Loss decreases extremely slowly |
+| **Underfitting** | HIGH | Both losses plateau at high values |
+| **Dying ReLU proxy** | HIGH | Loss flatlines early at high value |
+| **Noisy training** | MEDIUM | Jagged loss with frequent up-down flips |
+| **Data leakage proxy** | HIGH | Val loss consistently lower than train |
+| **Missed early stopping** | WARNING | Val minimum not used as final checkpoint |
+| **Label noise floor** | MEDIUM | Loss can't drop below suspiciously high threshold |
 
-### 📊 Multiple Output Formats
+### Multiple Output Formats
 
 - **Text:** Pretty-printed summaries (with colors)
 - **JSON:** Programmatic access to findings
 - **HTML:** Interactive report with loss curve visualization (v0.2+)
 
-### 🔧 Flexible APIs
+### Flexible APIs
 
 ```python
 # 1. Full diagnosis (rich report)
@@ -104,18 +106,18 @@ data = report.to_dict()           # → JSON-serializable dict
 html = report.to_html()           # → standalone HTML (v0.2+)
 
 # 2. One-liner for notebooks
-from sk_autod import quick_check
+from SK_AutoD import quick_check
 print(quick_check(train_loss, val_loss))  # → "[CRITICAL] Classic overfitting"
 
 # 3. In-training callback (v0.3+)
-from sk_autod import AutoDCallback
+from SK_AutoD import AutoDCallback
 cb = AutoDCallback(min_epochs=10, print_live=True)
 for epoch in range(100):
     # ... your training loop ...
     cb.on_epoch_end(epoch, train_loss, val_loss)
 ```
 
-### 🎯 Confidence-Scored Findings
+### Confidence-Scored Findings
 
 Each diagnosis includes a confidence score (0.0–1.0), helping you prioritize fixes:
 
@@ -158,16 +160,16 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete design details.
 
 ```bash
 # Command-line diagnosis
-sk-autod diagnose \
+SK-AutoD diagnose \
   --train-loss 2.3 1.9 1.4 0.9 0.5 0.3 0.15 \
   --val-loss 2.4 2.0 1.8 1.9 2.3 2.8 3.4 \
   --output json
 
 # From CSV files
-sk-autod diagnose --train-file train_losses.csv --val-file val_losses.csv
+SK-AutoD diagnose --train-file train_losses.csv --val-file val_losses.csv
 
 # From stdin (pipe-friendly)
-echo "2.3 1.9 1.4 0.9" | sk-autod diagnose --train-loss -
+echo "2.3 1.9 1.4 0.9" | SK-AutoD diagnose --train-loss -
 ```
 
 ---
@@ -182,17 +184,17 @@ val   = [2.4, 2.0, 1.6, 1.4, 1.3, 1.2, 1.2]
 
 report = diagnose(train, val)
 print(report.summary())
-# → ✅ No issues found!
+# → No issues found!
 ```
 
 ### Example 2: Classic Overfitting
 
 ```python
 train = [2.3, 1.9, 1.4, 0.9, 0.5, 0.3, 0.15]
-val   = [2.4, 2.0, 1.8, 1.9, 2.3, 2.8, 3.4]  # diverges ↗
+val   = [2.4, 2.0, 1.8, 1.9, 2.3, 2.8, 3.4]  # diverges 
 
 report = diagnose(train, val)
-# → 🔴 CRITICAL: Classic overfitting at epoch 4 (94% confidence)
+# → CRITICAL: Classic overfitting at epoch 4 (94% confidence)
 # → Fix: Add dropout, L2 regularisation, reduce capacity
 ```
 
@@ -203,7 +205,7 @@ train = [2.3, 1.8, 1.6, 1.9, 1.5, 1.7, 1.4]  # oscillates
 val   = [2.5, 2.0, 1.9, 2.1, 1.8, 2.0, 1.9]
 
 report = diagnose(train, val)
-# → 🟠 HIGH: LR too high (oscillations detected, variance 2.3× baseline)
+# → HIGH: LR too high (oscillations detected, variance 2.3× baseline)
 # → Fix: Reduce LR by 5–10×, add warmup schedule
 ```
 
@@ -244,30 +246,30 @@ This repository now includes the pieces you would expect from a polished open-so
 ## Roadmap
 
 ### v0.1.0 (Current)
-- ✅ Core 5 detectors (overfitting, LR issues, early stopping)
-- ✅ Text output + CLI
-- ✅ Basic Python API
-- ✅ Unit tests (80%+ coverage)
+- Core 5 detectors (overfitting, LR issues, early stopping)
+- Text output + CLI
+- Basic Python API
+- Unit tests (80%+ coverage)
 
 ### v0.2.0 (May 2026)
-- 🔄 All 10 detectors
-- 🔄 JSON + HTML output
-- 🔄 Embedded loss curve visualization
+- All 10 detectors
+- JSON + HTML output
+- Embedded loss curve visualization
 
 ### v0.3.0 (June 2026)
-- 🔄 PyTorch callback
-- 🔄 Keras callback
-- 🔄 Jupyter notebook integration
+- PyTorch callback
+- Keras callback
+- Jupyter notebook integration
 
 ### v0.4.0 (July 2026)
-- 🔄 Weights & Biases integration
-- 🔄 MLflow support
-- 🔄 Adaptive thresholds
+- Weights & Biases integration
+- MLflow support
+- Adaptive thresholds
 
 ### v1.0.0 (August 2026)
-- 🔄 Stable API guarantee
-- 🔄 Full documentation
-- 🔄  100% test coverage
+- Stable API guarantee
+- Full documentation
+-  100% test coverage
 
 ---
 
@@ -287,8 +289,8 @@ We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guideline
 ## Philosophy & Design
 
 1. **Rule-based, not ML-based:** Detectors use hand-crafted heuristics, not neural networks.
-   - ✅ Interpretable, debuggable, no training needed
-   - ✅ Works offline, no API calls
+   - Interpretable, debuggable, no training needed
+   - Works offline, no API calls
    
 2. **Zero configuration:** Works out-of-the-box with sensible defaults.
    - Thresholds are data-agnostic, tuned on 100+ synthetic curves
@@ -347,7 +349,7 @@ if any(f.severity == "CRITICAL" for f in report.findings):
 
 ## License
 
-MIT License © 2026 Shamique Khan  
+MIT License 2026 Shamique Khan  
 See [LICENSE](./LICENSE) file for details.
 
 ---
@@ -387,8 +389,8 @@ If SK-AutoD helps your research, please cite:
 
 <div align="center">
 
-**SK-AutoD** — Because your time is more valuable than manual eyeballing. 🚀
+**SK-AutoD** — Because your time is more valuable than manual eyeballing. 
 
-[⭐ Star us on GitHub](https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician) if you find this helpful!
+[ Star us on GitHub](https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician) if you find this helpful!
 
 </div>

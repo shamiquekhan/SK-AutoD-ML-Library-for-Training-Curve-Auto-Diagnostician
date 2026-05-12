@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SK-AutoD — Training Curve Diagnostician</title>
+<meta name="description" content="Auto-diagnose your ML training curves. Detect overfitting, exploding gradients, LR issues, and more.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Instrument+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+
+:root {
+  --bg:       #F5F3EE;
+  --bg1:      #EFECEA;
+  --bg2:      #E8E4DF;
+  --surface:  #FFFFFF;
+  --border:   #DDD9D3;
+  --border2:  #C9C4BD;
+  --text:     #1A1A18;
+  --text2:    #3C3B38;
+  --muted:    #837F79;
+  --muted2:   #6B6762;
+  --accent:   #2D4A36;
+  --accent2:  #3D6349;
+  --accent-l: rgba(45,74,54,.07);
+  --accent-m: rgba(45,74,54,.12);
+  --red:      #8C2F2F;
+  --orange:   #8C4A1E;
+  --yellow:   #7A6018;
+  --blue:     #2B4472;
+  --green:    #2D4A36;
+  --mono:     'JetBrains Mono', monospace;
+  --body:     'Instrument Sans', sans-serif;
+  --display:  'Cormorant', serif;
+}
+
+html { scroll-behavior: smooth }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px }
+::-webkit-scrollbar-track { background: var(--bg1) }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px }
+
+/* ── SELECTION ── */
+::selection { background: var(--accent-m); color: var(--accent) }
+
+/* ── LAYOUT ── */
+.container { max-width: 1060px; margin: 0 auto; padding: 0 32px }
+section { padding: 104px 0 }
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(245,243,238,.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; max-width: 1060px; margin: 0 auto; padding: 0 32px;
+}
+.nav-logo {
+  font-family: var(--display);
+  font-size: 20px; font-weight: 600;
+  color: var(--text); text-decoration: none;
+  letter-spacing: 0.01em;
+  display: flex; align-items: center; gap: 9px;
+}
+.nav-logo-mark {
+  width: 22px; height: 22px;
+  border: 1.5px solid var(--accent);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--accent); font-weight: 500;
+  font-family: var(--mono);
+}
+.nav-links { display: flex; align-items: center; gap: 2px }
+.nav-links a {
+  color: var(--muted); text-decoration: none;
+  font-size: 13px; font-weight: 400;
+  padding: 5px 12px; border-radius: 5px;
+  transition: color .15s, background .15s;
+}
+.nav-links a:hover { color: var(--text); background: var(--bg2) }
+.nav-cta {
+  background: var(--accent) !important;
+  color: #F5F3EE !important;
+  font-weight: 500 !important; padding: 6px 16px !important;
+}
+.nav-cta:hover { background: var(--accent2) !important; }
+
+/* ── VERSION BADGE ── */
+.v-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border2); border-radius: 3px;
+  padding: 3px 10px; font-size: 11px;
+  font-family: var(--mono); color: var(--muted);
+  margin-bottom: 24px; background: var(--surface);
+}
+.v-badge-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent);
+  animation: breathe 2.4s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,100% { opacity:1 } 50% { opacity:.3 }
+}
+
+/* ── HERO ── */
+#hero {
+  padding: 148px 0 88px;
+  border-bottom: 1px solid var(--border);
+}
+.hero-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 72px; align-items: start;
+}
+h1 {
+  font-family: var(--display);
+  font-size: clamp(2.6rem, 4.5vw, 4rem);
+  font-weight: 500; line-height: 1.08;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+h1 em { font-style: italic; color: var(--accent) }
+.hero-sub {
+  color: var(--muted);
+  font-size: 16px; line-height: 1.7;
+  margin-top: 20px; font-weight: 300;
+  max-width: 420px;
+}
+.hero-actions {
+  display: flex; align-items: center;
+  gap: 10px; margin-top: 32px; flex-wrap: wrap;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 20px; border-radius: 5px;
+  font-size: 13.5px; font-weight: 500;
+  text-decoration: none;
+  transition: all .15s; cursor: pointer;
+  border: none; font-family: var(--body);
+}
+.btn-primary { background: var(--accent); color: #F5F3EE }
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px) }
+.btn-ghost {
+  background: transparent; color: var(--text2);
+  border: 1px solid var(--border2);
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent) }
+
+.install-strip {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px; padding: 9px 14px;
+  font-family: var(--mono); font-size: 12.5px;
+  margin-top: 16px; max-width: 340px;
+  color: var(--text2);
+}
+.install-strip .pmt { color: var(--muted) }
+.install-strip .copy-inline {
+  margin-left: auto; background: none; border: none;
+  color: var(--muted); cursor: pointer;
+  font-size: 11px; font-family: var(--mono);
+  padding: 2px 6px; border-radius: 3px;
+  transition: color .15s, background .15s;
+}
+.install-strip .copy-inline:hover {
+  color: var(--accent); background: var(--accent-l);
+}
+
+/* ── TERMINAL ── */
+.terminal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+  font-family: var(--mono); font-size: 12.5px;
+  box-shadow: 0 2px 16px rgba(0,0,0,.05);
+}
+.term-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg1);
+}
+.term-dot { width: 10px; height: 10px; border-radius: 50% }
+.td1 { background: #E0786A }
+.td2 { background: #D4A84B }
+.td3 { background: #6DB388 }
+.term-file {
+  margin-left: 8px; font-size: 11px; color: var(--muted);
+}
+.term-body { padding: 18px 20px; line-height: 1.8; color: var(--text2) }
+.t-kw   { color: #5A3E8C }
+.t-fn   { color: #1F5C8C }
+.t-str  { color: #3A6E30 }
+.t-num  { color: #7A5222 }
+.t-cm   { color: #AAA59E }
+.t-p    { color: var(--muted) }
+.term-out {
+  border-top: 1px solid var(--border);
+  padding: 16px 20px;
+  background: var(--bg1);
+  line-height: 1.8;
+}
+.to-sep  { color: var(--border2) }
+.to-head { color: var(--text); font-weight: 500 }
+.to-crit { color: var(--red); font-weight: 500 }
+.to-info { color: var(--muted); padding-left: 3px }
+.to-fix  { color: var(--green); padding-left: 3px }
+
+/* ── STATS ── */
+.stats-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 6px; overflow: hidden;
+  background: var(--border);
+  gap: 1px; margin-top: 72px;
+}
+.stat {
+  background: var(--surface);
+  padding: 28px 24px; text-align: center;
+}
+.stat-n {
+  font-family: var(--display);
+  font-size: 2.6rem; font-weight: 500;
+  color: var(--accent); line-height: 1;
+}
+.stat-l {
+  font-size: 11.5px; color: var(--muted);
+  font-family: var(--mono); margin-top: 6px;
+  letter-spacing: .03em;
+}
+
+/* ── SECTION COMMON ── */
+.sec-tag {
+  font-family: var(--mono); font-size: 10.5px;
+  color: var(--accent); letter-spacing: .14em;
+  text-transform: uppercase; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sec-tag::before {
+  content: ''; width: 18px; height: 1px;
+  background: var(--accent); display: block;
+}
+h2 {
+  font-family: var(--display);
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  font-weight: 500; line-height: 1.12;
+  letter-spacing: -0.01em; color: var(--text);
+}
+.sec-sub {
+  color: var(--muted); font-size: 15.5px;
+  margin-top: 12px; font-weight: 300;
+  max-width: 500px; line-height: 1.7;
+}
+
+/* ── FEATURES ── */
+#features { border-bottom: 1px solid var(--border) }
+.feat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px; margin-top: 48px;
+  border: 1px solid var(--border);
+  border-radius: 6px; overflow: hidden;
+}
+.feat-card {
+  background: var(--surface);
+  padding: 28px 26px;
+  transition: background .2s;
+}
+.feat-card:hover { background: var(--bg1) }
+.feat-num {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--border2); margin-bottom: 18px;
+  font-weight: 400;
+}
+.feat-title {
+  font-family: var(--display);
+  font-size: 17px; font-weight: 500;
+  color: var(--text); margin-bottom: 10px;
+  line-height: 1.3;
+}
+.feat-body { color: var(--muted); font-size: 13.5px; line-height: 1.65 }
+code {
+  font-family: var(--mono); font-size: .85em;
+  background: var(--accent-l); color: var(--accent);
+  padding: 1px 5px; border-radius: 3px;
+}
+
+/* ── DETECTORS ── */
+#detectors { background: var(--bg1); border-bottom: 1px solid var(--border) }
+.det-header {
+  display: flex; align-items: flex-end;
+  justify-content: space-between; gap: 24px;
+  flex-wrap: wrap; margin-bottom: 40px;
+}
+table.det-t {
+  width: 100%; border-collapse: collapse;
+  font-size: 13.5px;
+  border: 1px solid var(--border);
+  border-radius: 6px; overflow: hidden;
+  background: var(--surface);
+}
+.det-t thead { border-bottom: 1px solid var(--border) }
+.det-t th {
+  text-align: left; padding: 13px 20px;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); letter-spacing: .1em;
+  text-transform: uppercase; font-weight: 400;
+  background: var(--bg1);
+}
+.det-t tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background .12s; cursor: default;
+}
+.det-t tbody tr:last-child { border-bottom: none }
+.det-t tbody tr:hover { background: var(--bg1) }
+.det-t td { padding: 15px 20px; vertical-align: middle }
+.det-name { font-weight: 500; color: var(--text) }
+.det-desc { color: var(--muted); font-size: 13px }
+.det-fix  { color: var(--muted2); font-size: 12.5px; font-family: var(--mono) }
+
+.sev {
+  display: inline-block;
+  padding: 2px 8px; border-radius: 3px;
+  font-size: 10px; font-weight: 500;
+  font-family: var(--mono); letter-spacing: .04em;
+  border: 1px solid;
+}
+.sev-crit { background: rgba(140,47,47,.06); color: #8C2F2F; border-color: rgba(140,47,47,.2) }
+.sev-high { background: rgba(140,74,30,.06); color: #7A3A12; border-color: rgba(140,74,30,.2) }
+.sev-med  { background: rgba(122,96,24,.06); color: #6B5214; border-color: rgba(122,96,24,.2) }
+.sev-warn { background: rgba(43,68,114,.06); color: #2B4472; border-color: rgba(43,68,114,.2) }
+
+/* ── CODE EXAMPLES ── */
+#examples { border-bottom: 1px solid var(--border) }
+.tabs-wrap { margin-top: 44px }
+.ex-tabs {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.ex-tab {
+  padding: 10px 18px; font-size: 12.5px;
+  font-family: var(--mono); color: var(--muted);
+  cursor: pointer; border: none; background: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px; white-space: nowrap;
+  transition: color .15s; letter-spacing: .01em;
+}
+.ex-tab:hover { color: var(--text2) }
+.ex-tab.active { color: var(--accent); border-bottom-color: var(--accent) }
+.ex-panels {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none; border-radius: 0 0 6px 6px;
+  overflow: hidden;
+}
+.ex-panel {
+  display: none; padding: 26px 28px;
+  font-family: var(--mono); font-size: 12.5px;
+  line-height: 1.85; color: var(--text2);
+}
+.ex-panel.active { display: block }
+
+/* ── CHANGELOG / ROADMAP ── */
+#roadmap { background: var(--bg1); border-bottom: 1px solid var(--border) }
+.rm-list { margin-top: 44px }
+.rm-row {
+  display: grid;
+  grid-template-columns: 90px 20px 1fr;
+  gap: 0 20px; align-items: start;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.rm-row:last-child { border-bottom: none }
+.rm-ver {
+  font-family: var(--mono); font-size: 12px;
+  color: var(--muted); padding-top: 3px;
+  text-align: right;
+}
+.rm-line {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 0;
+}
+.rm-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  background: var(--bg);
+  margin-top: 5px; flex-shrink: 0; position: relative; z-index: 1;
+  transition: all .2s;
+}
+.rm-dot.done { background: var(--accent); border-color: var(--accent) }
+.rm-dot.now  {
+  background: var(--bg); border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-l);
+}
+.rm-content {}
+.rm-title {
+  font-family: var(--display);
+  font-size: 17px; font-weight: 500;
+  color: var(--text); margin-bottom: 5px;
+}
+.rm-items { color: var(--muted); font-size: 13.5px; font-weight: 300 }
+.rm-date {
+  display: inline-block; margin-top: 7px;
+  font-family: var(--mono); font-size: 10.5px;
+  color: var(--border2); letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.rm-status {
+  display: inline-block;
+  padding: 2px 8px; border-radius: 3px;
+  font-family: var(--mono); font-size: 10px;
+  font-weight: 500; border: 1px solid;
+  margin-left: 8px; vertical-align: middle;
+}
+.rm-status.done { background: var(--accent-l); color: var(--accent); border-color: var(--accent-m) }
+.rm-status.now  { background: rgba(43,68,114,.06); color: var(--blue); border-color: rgba(43,68,114,.2) }
+.rm-status.soon { background: var(--bg2); color: var(--muted); border-color: var(--border2) }
+
+/* ── INSTALL ── */
+#install { border-bottom: 1px solid var(--border) }
+.install-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 40px; align-items: start; margin-top: 48px;
+}
+.install-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px; overflow: hidden;
+}
+.install-block-head {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg1);
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted); letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.install-block-body { padding: 20px }
+.cmd-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: 5px; padding: 10px 14px;
+  font-family: var(--mono); font-size: 12.5px;
+  color: var(--text2);
+}
+.cmd-row .pmt { color: var(--muted) }
+.cmd-row .cmd { flex: 1 }
+.copy-btn {
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; font-family: var(--mono);
+  font-size: 10.5px; padding: 2px 7px; border-radius: 3px;
+  transition: all .15s; white-space: nowrap;
+}
+.copy-btn:hover { color: var(--accent); background: var(--accent-l) }
+.install-note {
+  font-size: 12px; color: var(--muted);
+  margin-top: 12px; font-family: var(--mono);
+}
+.sep-or {
+  text-align: center; color: var(--muted);
+  font-size: 11px; font-family: var(--mono);
+  position: relative; margin: 20px 0;
+}
+.sep-or::before, .sep-or::after {
+  content: ''; position: absolute; top: 50%;
+  width: 38%; height: 1px; background: var(--border);
+}
+.sep-or::before { left: 0 }
+.sep-or::after  { right: 0 }
+
+/* quick-start block */
+.qs-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px; overflow: hidden;
+}
+.qs-head {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg1);
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted); letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.qs-body {
+  padding: 20px; font-family: var(--mono);
+  font-size: 12.5px; line-height: 1.85; color: var(--text2);
+}
+
+/* ── LINKS SECTION ── */
+#links { padding: 72px 0; border-bottom: 1px solid var(--border) }
+.links-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 20px; margin-top: 40px;
+}
+.link-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px; padding: 22px 20px;
+  text-decoration: none; color: inherit;
+  transition: border-color .15s, transform .15s;
+  display: block;
+}
+.link-card:hover { border-color: var(--accent); transform: translateY(-2px) }
+.link-card-icon { font-size: 20px; margin-bottom: 12px }
+.link-card-title {
+  font-family: var(--display); font-size: 15px;
+  font-weight: 500; color: var(--text); margin-bottom: 5px;
+}
+.link-card-desc { color: var(--muted); font-size: 12.5px; line-height: 1.55 }
+
+/* ── SITE MAP ── */
+#site-map {
+  padding: 72px 0 88px;
+  background: linear-gradient(180deg, var(--bg), var(--bg1));
+  border-bottom: 1px solid var(--border);
+}
+.site-map-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 28px;
+}
+.site-map-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 22px 20px;
+  transition: transform .15s, border-color .15s, box-shadow .15s;
+  box-shadow: 0 1px 0 rgba(0,0,0,.02);
+}
+.site-map-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 10px 24px rgba(0,0,0,.05);
+}
+.site-map-k {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.site-map-title {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.site-map-desc {
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+
+/* ── FOOTER ── */
+footer {
+  background: var(--bg1);
+  padding: 48px 0;
+}
+.foot-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 40px;
+}
+.foot-brand {}
+.foot-logo {
+  font-family: var(--display);
+  font-size: 22px; font-weight: 500;
+  color: var(--text); margin-bottom: 10px;
+}
+.foot-tagline {
+  font-size: 13px; color: var(--muted);
+  line-height: 1.65; max-width: 240px;
+}
+.foot-copy {
+  font-size: 11.5px; color: var(--muted);
+  margin-top: 20px; font-family: var(--mono);
+}
+.foot-col-title {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: 14px;
+}
+.foot-links { display: flex; flex-direction: column; gap: 8px }
+.foot-links a {
+  color: var(--text2); text-decoration: none;
+  font-size: 13.5px; transition: color .15s;
+  display: flex; align-items: center; gap: 5px;
+}
+.foot-links a:hover { color: var(--accent) }
+.foot-links a .ext { font-size: 10px; color: var(--muted) }
+.foot-bottom {
+  margin-top: 48px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center;
+  justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.foot-bottom-left {
+  font-size: 12px; color: var(--muted);
+  font-family: var(--mono); display: flex; gap: 20px;
+}
+.foot-bottom-left a { color: var(--muted); text-decoration: none }
+.foot-bottom-left a:hover { color: var(--text) }
+.foot-bottom-right { font-size: 12px; color: var(--muted); font-family: var(--mono) }
+
+/* ── DOCUMENTATION ── */
+#docs { border-bottom: 1px solid var(--border) }
+.docs-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 40px; margin-top: 48px; align-items: start;
+}
+.docs-sidebar {
+  position: sticky; top: 76px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px; overflow: hidden;
+}
+.docs-sidebar-head {
+  padding: 12px 16px;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.docs-nav-group { padding: 10px 0 }
+.docs-nav-label {
+  font-family: var(--mono); font-size: 9.5px;
+  color: var(--muted); letter-spacing: .12em;
+  text-transform: uppercase; padding: 4px 16px 2px;
+}
+.docs-nav-item {
+  display: block; padding: 6px 16px;
+  font-size: 13px; color: var(--text2);
+  cursor: pointer; transition: background .12s, color .12s;
+  text-decoration: none; border-left: 2px solid transparent;
+  border-right: none; border-top: none; border-bottom: none;
+  background: none; width: 100%; text-align: left;
+  font-family: var(--body);
+}
+.docs-nav-item:hover { background: var(--bg1); color: var(--text) }
+.docs-nav-item.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accent-l);
+}
+.docs-nav-divider { height: 1px; background: var(--border); margin: 6px 0 }
+
+.docs-content {}
+.docs-panel { display: none }
+.docs-panel.active { display: block }
+
+.doc-section { margin-bottom: 44px }
+.doc-section:last-child { margin-bottom: 0 }
+
+.doc-h3 {
+  font-family: var(--display); font-size: 22px;
+  font-weight: 500; color: var(--text);
+  margin-bottom: 10px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.doc-h3 .tag {
+  font-family: var(--mono); font-size: 11px;
+  font-weight: 400; color: var(--muted);
+  background: var(--bg1); border: 1px solid var(--border);
+  padding: 2px 8px; border-radius: 3px;
+}
+.doc-lead {
+  color: var(--muted); font-size: 14px;
+  line-height: 1.7; margin-bottom: 20px; font-weight: 300;
+}
+.doc-sig {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: 5px; padding: 14px 18px;
+  font-family: var(--mono); font-size: 12.5px;
+  color: var(--text2); margin-bottom: 20px;
+  line-height: 1.6;
+}
+.doc-sig .fn  { color: #1F5C8C }
+.doc-sig .arg { color: var(--text2) }
+.doc-sig .typ { color: var(--muted) }
+.doc-sig .ret { color: #3A6E30 }
+.doc-sig .cm  { color: #AAA59E }
+
+.params-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px; margin-bottom: 20px;
+  border: 1px solid var(--border); border-radius: 5px;
+  overflow: hidden;
+}
+.params-table thead { background: var(--bg1) }
+.params-table th {
+  text-align: left; padding: 10px 16px;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); letter-spacing: .08em;
+  text-transform: uppercase; font-weight: 400;
+  border-bottom: 1px solid var(--border);
+}
+.params-table td { padding: 12px 16px; vertical-align: top }
+.params-table tbody tr { border-bottom: 1px solid var(--border) }
+.params-table tbody tr:last-child { border-bottom: none }
+.params-table tbody tr:hover { background: var(--bg1) }
+.p-name { font-family: var(--mono); font-size: 12px; color: var(--accent) }
+.p-type { font-family: var(--mono); font-size: 11.5px; color: var(--muted2) }
+.p-req  {
+  font-family: var(--mono); font-size: 10px;
+  padding: 2px 6px; border-radius: 3px; border: 1px solid;
+}
+.p-req.req  { background: rgba(140,47,47,.05); color: #8C2F2F; border-color: rgba(140,47,47,.2) }
+.p-req.opt  { background: var(--bg2); color: var(--muted); border-color: var(--border2) }
+.p-desc { color: var(--muted); font-size: 13px }
+
+.doc-returns {
+  background: var(--accent-l); border: 1px solid var(--accent-m);
+  border-radius: 5px; padding: 14px 18px; margin-bottom: 20px;
+  font-size: 13px;
+}
+.doc-returns strong { color: var(--accent); font-family: var(--mono); font-size: 11px;
+  letter-spacing: .06em; text-transform: uppercase; display: block; margin-bottom: 4px }
+.doc-returns p { color: var(--muted2); line-height: 1.6 }
+
+.doc-note {
+  background: rgba(43,68,114,.05);
+  border: 1px solid rgba(43,68,114,.18);
+  border-radius: 5px; padding: 13px 16px;
+  font-size: 13px; color: var(--muted2); margin-bottom: 20px;
+  display: flex; gap: 10px;
+}
+.doc-note .dn-icon { color: #2B4472; flex-shrink: 0; font-size: 14px }
+.doc-note p { line-height: 1.6 }
+
+.attr-list { margin: 0; padding: 0; list-style: none }
+.attr-list li {
+  display: grid; grid-template-columns: 160px 1fr;
+  gap: 16px; padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; align-items: baseline;
+}
+.attr-list li:last-child { border-bottom: none }
+.al-name { font-family: var(--mono); font-size: 12px; color: var(--accent) }
+.al-desc { color: var(--muted) }
+
+/* ── TUTORIAL ── */
+#tutorial { background: var(--bg1); border-bottom: 1px solid var(--border) }
+.tut-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 40px; margin-top: 48px; align-items: start;
+}
+.tut-sidebar {
+  position: sticky; top: 76px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px; overflow: hidden;
+}
+.tut-sidebar-head {
+  padding: 12px 16px; background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.tut-nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; font-size: 13px; color: var(--text2);
+  cursor: pointer; transition: background .12s, color .12s;
+  border-left: 2px solid transparent;
+  border-right: none; border-top: none; border-bottom: none;
+  background: none; width: 100%; text-align: left;
+  font-family: var(--body); border-bottom: 1px solid var(--border);
+}
+.tut-nav-item:last-child { border-bottom: none }
+.tut-nav-item:hover { background: var(--bg1); color: var(--text) }
+.tut-nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-l) }
+.tut-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid var(--border2); display: flex;
+  align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); flex-shrink: 0;
+}
+.tut-nav-item.active .tut-num {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+.tut-label { line-height: 1.3; font-size: 12.5px }
+
+.tut-panel { display: none }
+.tut-panel.active { display: block }
+
+.tut-step {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 20px; margin-bottom: 32px; align-items: start;
+}
+.tut-step-num {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 13px; font-weight: 500;
+  flex-shrink: 0; margin-top: 2px;
+}
+.tut-step-body {}
+.tut-step-title {
+  font-family: var(--display); font-size: 18px;
+  font-weight: 500; color: var(--text); margin-bottom: 8px;
+}
+.tut-step-desc {
+  color: var(--muted); font-size: 14px;
+  line-height: 1.7; margin-bottom: 14px; font-weight: 300;
+}
+.tut-code {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 5px; overflow: hidden; margin-bottom: 14px;
+}
+.tut-code-bar {
+  padding: 9px 14px; background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); letter-spacing: .06em;
+}
+.tut-code-body {
+  padding: 16px 18px; font-family: var(--mono);
+  font-size: 12.5px; line-height: 1.8; color: var(--text2);
+}
+.tut-callout {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 5px; padding: 14px 16px;
+  font-size: 13px; color: var(--muted2);
+  line-height: 1.65; margin-bottom: 14px;
+  border-left: 3px solid var(--accent);
+}
+.tut-callout strong { color: var(--text); font-weight: 500 }
+.tut-expected {
+  background: rgba(45,74,54,.05);
+  border: 1px solid var(--accent-m); border-radius: 5px;
+  padding: 14px 18px; font-family: var(--mono);
+  font-size: 12px; color: var(--muted2); line-height: 1.8;
+}
+.tut-expected-label {
+  font-size: 10px; color: var(--accent); letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: 8px;
+  font-family: var(--mono);
+}
+
+@media(max-width: 860px) {
+  .docs-layout { grid-template-columns: 1fr }
+  .tut-layout  { grid-template-columns: 1fr }
+  .docs-sidebar, .tut-sidebar { position: static }
+}
+
+/* ── REVEAL ── */
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease }
+.reveal.v { opacity: 1; transform: none }
+
+/* ── RESPONSIVE ── */
+@media(max-width: 860px) {
+  .hero-inner { grid-template-columns: 1fr }
+  .feat-grid  { grid-template-columns: 1fr 1fr }
+  .install-grid { grid-template-columns: 1fr }
+  .links-grid { grid-template-columns: 1fr 1fr }
+  .foot-grid  { grid-template-columns: 1fr 1fr }
+  .stats-row  { grid-template-columns: 1fr 1fr }
+  .rm-row     { grid-template-columns: 60px 16px 1fr }
+}
+@media(max-width: 560px) {
+  .feat-grid  { grid-template-columns: 1fr }
+  .links-grid { grid-template-columns: 1fr }
+  .foot-grid  { grid-template-columns: 1fr }
+  nav .nav-cta { display: none }
+  section { padding: 72px 0 }
+  .container { padding: 0 20px }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <span class="nav-logo-mark">Rx</span>
+      SK-AutoD
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#detectors">Detectors</a>
+      <a href="docs.html">Docs</a>
+      <a href="tutorial.html">Tutorial</a>
+      <a href="#examples">Examples</a>
+      <a href="#roadmap">Changelog</a>
+      <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician" target="_blank">GitHub</a>
+      <a href="#install" class="nav-cta">Install</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div>
+        <div class="v-badge">
+          <span class="v-badge-dot"></span>
+          v0.1.0 — now on PyPI
+        </div>
+        <h1 class="reveal">Stop <em>eyeballing</em><br>your loss curves.</h1>
+        <p class="hero-sub reveal">SK-AutoD diagnoses your ML training in seconds. Overfitting, exploding gradients, learning rate issues — detected automatically with confidence scores and fix recommendations.</p>
+        <div class="hero-actions reveal">
+          <a href="#install" class="btn btn-primary">Get started</a>
+          <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician" target="_blank" class="btn btn-ghost">View on GitHub ↗</a>
+        </div>
+        <div class="install-strip reveal">
+          <span class="pmt">$</span>
+          <span>pip install sk-autod</span>
+          <button class="copy-inline" onclick="cp('pip install sk-autod',this)">copy</button>
+        </div>
+      </div>
+
+      <div class="reveal" style="animation-delay:.1s">
+        <div class="terminal">
+          <div class="term-bar">
+            <span class="term-dot td1"></span>
+            <span class="term-dot td2"></span>
+            <span class="term-dot td3"></span>
+            <span class="term-file">diagnosis.py</span>
+          </div>
+          <div class="term-body"><span class="t-kw">from</span> sk_autod <span class="t-kw">import</span> <span class="t-fn">diagnose</span>
+
+report <span class="t-p">=</span> <span class="t-fn">diagnose</span><span class="t-p">(</span>
+  train_loss<span class="t-p">=[</span><span class="t-num">2.3, 1.9, 1.4, 0.9, 0.5</span><span class="t-p">],</span>
+  val_loss  <span class="t-p">=[</span><span class="t-num">2.4, 2.0, 1.8, 1.9, 2.3</span><span class="t-p">]</span>
+<span class="t-p">)</span>
+report<span class="t-p">.</span><span class="t-fn">summary</span><span class="t-p">()</span></div>
+          <div class="term-out">
+<div class="to-sep">────────────────────────────────</div>
+<div class="to-head">  SK-AutoD Diagnosis Report</div>
+<div class="to-sep">────────────────────────────────</div>
+&nbsp;
+<div class="to-crit">● CRITICAL — Classic overfitting</div>
+<div class="to-info">  Detected at epoch 4 (94% confidence)</div>
+<div class="to-info">  Val loss rising while train loss falls.</div>
+&nbsp;
+<div class="to-fix">  ↳ Dropout (p=0.3–0.5), L2, ↓ capacity</div>
+&nbsp;
+<div class="to-sep">────────────────────────────────</div>
+<div class="to-info">  1 critical issue found.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row reveal" style="animation-delay:.15s">
+      <div class="stat">
+        <div class="stat-n">10</div>
+        <div class="stat-l">detectors</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n">0.2ms</div>
+        <div class="stat-l">per curve</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n">0</div>
+        <div class="stat-l">extra deps</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n">MIT</div>
+        <div class="stat-l">license</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="sec-tag reveal">features</div>
+    <h2 class="reveal">Built for the way<br>you actually train.</h2>
+    <p class="sec-sub reveal">No configuration. No ML model needed to diagnose your ML model. Pure Python signal analysis, offline, instant.</p>
+
+    <div class="feat-grid reveal" style="animation-delay:.08s">
+      <div class="feat-card">
+        <div class="feat-num">01</div>
+        <div class="feat-title">Rule-based, not ML-based</div>
+        <div class="feat-body">Detectors use hand-crafted signal analysis — no training data, no neural network, no API calls. Fully interpretable and debuggable.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-num">02</div>
+        <div class="feat-title">Zero configuration</div>
+        <div class="feat-body">Works out of the box with sensible defaults. Thresholds tuned on 100+ synthetic curves across all major pathologies.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-num">03</div>
+        <div class="feat-title">Confidence-scored findings</div>
+        <div class="feat-body">Every finding includes a 0–100% confidence score so you know which issues to tackle first and which to monitor.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-num">04</div>
+        <div class="feat-title">Extensible detectors</div>
+        <div class="feat-body">Subclass <code>BaseDetector</code>, implement one method, pass it to <code>diagnose()</code>. Your custom pattern in three minutes.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-num">05</div>
+        <div class="feat-title">CLI + Python API + callbacks</div>
+        <div class="feat-body">Use it from the terminal, in a notebook, embedded in a training loop, or piped into your CI pipeline. All the same engine.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-num">06</div>
+        <div class="feat-title">Lightweight</div>
+        <div class="feat-body">NumPy + SciPy only. No PyTorch, no TensorFlow, no heavy deps. Diagnose any framework's curves without installing it.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DETECTORS -->
+<section id="detectors">
+  <div class="container">
+    <div class="det-header">
+      <div>
+        <div class="sec-tag reveal">diagnostics engine</div>
+        <h2 class="reveal">10 detectors.<br>Every common pathology.</h2>
+        <p class="sec-sub reveal">Each detector returns a severity level, confidence score, root cause, and a concrete fix recommendation.</p>
+      </div>
+    </div>
+
+    <table class="det-t reveal">
+      <thead>
+        <tr>
+          <th>Detector</th>
+          <th>Severity</th>
+          <th>Signal detected</th>
+          <th>Fix hint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="det-name">Classic overfitting</td>
+          <td><span class="sev sev-crit">critical</span></td>
+          <td class="det-desc">Val loss rises while train loss falls</td>
+          <td class="det-fix">Dropout, L2 reg, ↓ capacity</td>
+        </tr>
+        <tr>
+          <td class="det-name">Exploding gradient</td>
+          <td><span class="sev sev-crit">critical</span></td>
+          <td class="det-desc">Loss spikes &gt;300% in one epoch</td>
+          <td class="det-fix">Gradient clipping, ↓ LR</td>
+        </tr>
+        <tr>
+          <td class="det-name">LR too high</td>
+          <td><span class="sev sev-high">high</span></td>
+          <td class="det-desc">Loss oscillates without downtrend</td>
+          <td class="det-fix">Reduce LR 5–10×, add warmup</td>
+        </tr>
+        <tr>
+          <td class="det-name">Underfitting</td>
+          <td><span class="sev sev-high">high</span></td>
+          <td class="det-desc">Both losses plateau at high values</td>
+          <td class="det-fix">↑ capacity, train longer</td>
+        </tr>
+        <tr>
+          <td class="det-name">Dying ReLU proxy</td>
+          <td><span class="sev sev-high">high</span></td>
+          <td class="det-desc">Loss flatlines early at high value</td>
+          <td class="det-fix">He init, Leaky ReLU, BatchNorm</td>
+        </tr>
+        <tr>
+          <td class="det-name">Data leakage proxy</td>
+          <td><span class="sev sev-high">high</span></td>
+          <td class="det-desc">Val loss consistently &lt; train loss</td>
+          <td class="det-fix">Audit train/val split</td>
+        </tr>
+        <tr>
+          <td class="det-name">LR too low</td>
+          <td><span class="sev sev-med">medium</span></td>
+          <td class="det-desc">Loss decreases extremely slowly</td>
+          <td class="det-fix">↑ LR, cosine decay schedule</td>
+        </tr>
+        <tr>
+          <td class="det-name">Noisy training</td>
+          <td><span class="sev sev-med">medium</span></td>
+          <td class="det-desc">Jagged loss, frequent direction flips</td>
+          <td class="det-fix">↑ batch size, gradient clipping</td>
+        </tr>
+        <tr>
+          <td class="det-name">Label noise floor</td>
+          <td><span class="sev sev-med">medium</span></td>
+          <td class="det-desc">Loss cannot drop below a high floor</td>
+          <td class="det-fix">Label smoothing, audit data</td>
+        </tr>
+        <tr>
+          <td class="det-name">Missed early stopping</td>
+          <td><span class="sev sev-warn">warning</span></td>
+          <td class="det-desc">Val minimum not used as checkpoint</td>
+          <td class="det-fix">EarlyStopping, patience=3</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- CODE EXAMPLES -->
+<section id="examples">
+  <div class="container">
+    <div class="sec-tag reveal">code examples</div>
+    <h2 class="reveal">Three APIs, one engine.</h2>
+    <p class="sec-sub reveal">Use the full report, the one-liner, or embed a live callback in your training loop — whichever fits your workflow.</p>
+
+    <div class="tabs-wrap reveal" style="animation-delay:.06s">
+      <div class="ex-tabs">
+        <button class="ex-tab active" onclick="showTab('full',this)">Full diagnosis</button>
+        <button class="ex-tab" onclick="showTab('quick',this)">quick_check()</button>
+        <button class="ex-tab" onclick="showTab('callback',this)">Training callback</button>
+        <button class="ex-tab" onclick="showTab('custom',this)">Custom detector</button>
+        <button class="ex-tab" onclick="showTab('cli',this)">CLI</button>
+      </div>
+      <div class="ex-panels">
+
+        <div id="tab-full" class="ex-panel active"><span class="t-kw">from</span> sk_autod <span class="t-kw">import</span> <span class="t-fn">diagnose</span>
+
+train_loss <span class="t-p">=</span> <span class="t-p">[</span><span class="t-num">2.3, 1.9, 1.4, 0.9, 0.5, 0.3, 0.15</span><span class="t-p">]</span>
+val_loss   <span class="t-p">=</span> <span class="t-p">[</span><span class="t-num">2.4, 2.0, 1.8, 1.9, 2.3, 2.8, 3.4</span><span class="t-p">]</span>
+
+report <span class="t-p">=</span> <span class="t-fn">diagnose</span><span class="t-p">(</span>train_loss<span class="t-p">,</span> val_loss<span class="t-p">)</span>
+report<span class="t-p">.</span><span class="t-fn">summary</span><span class="t-p">()</span>          <span class="t-cm"># formatted text output</span>
+report<span class="t-p">.</span><span class="t-fn">to_dict</span><span class="t-p">()</span>          <span class="t-cm"># JSON-serialisable dict</span>
+report<span class="t-p">.</span><span class="t-fn">to_html</span><span class="t-p">()</span>          <span class="t-cm"># HTML report (v0.2+)</span>
+
+<span class="t-cm"># Iterate over findings</span>
+<span class="t-kw">for</span> f <span class="t-kw">in</span> report<span class="t-p">.</span>findings<span class="t-p">:</span>
+    <span class="t-fn">print</span><span class="t-p">(</span><span class="t-str">f"</span><span class="t-p">{</span>f<span class="t-p">.</span>severity<span class="t-p">}</span><span class="t-str"> — </span><span class="t-p">{</span>f<span class="t-p">.</span>confidence<span class="t-p">:.0%}</span><span class="t-str"> confidence"</span><span class="t-p">)</span>
+    <span class="t-fn">print</span><span class="t-p">(</span><span class="t-str">f"  Fix: </span><span class="t-p">{</span>f<span class="t-p">.</span>fix<span class="t-p">}</span><span class="t-str">"</span><span class="t-p">)</span></div>
+
+        <div id="tab-quick" class="ex-panel"><span class="t-kw">from</span> sk_autod <span class="t-kw">import</span> <span class="t-fn">quick_check</span>
+
+<span class="t-cm"># Returns a single summary string — great for notebooks</span>
+<span class="t-fn">print</span><span class="t-p">(</span><span class="t-fn">quick_check</span><span class="t-p">(</span>train_loss<span class="t-p">,</span> val_loss<span class="t-p">))</span>
+<span class="t-cm"># → "[CRITICAL] Classic overfitting at epoch 4 (94% confidence)"</span>
+
+<span class="t-cm"># Clean curve — returns a green light</span>
+<span class="t-fn">print</span><span class="t-p">(</span><span class="t-fn">quick_check</span><span class="t-p">([</span><span class="t-num">2.3, 1.9, 1.4, 0.9, 0.5</span><span class="t-p">], [</span><span class="t-num">2.4, 2.0, 1.6, 1.4, 1.3</span><span class="t-p">]))</span>
+<span class="t-cm"># → "✓ No issues found"</span></div>
+
+        <div id="tab-callback" class="ex-panel"><span class="t-kw">from</span> sk_autod <span class="t-kw">import</span> <span class="t-fn">AutoDCallback</span>
+
+cb <span class="t-p">=</span> <span class="t-fn">AutoDCallback</span><span class="t-p">(</span>min_epochs<span class="t-p">=</span><span class="t-num">10</span><span class="t-p">,</span> print_live<span class="t-p">=</span><span class="t-kw">True</span><span class="t-p">)</span>
+
+train_losses<span class="t-p">,</span> val_losses <span class="t-p">= [], []</span>
+
+<span class="t-kw">for</span> epoch <span class="t-kw">in</span> <span class="t-fn">range</span><span class="t-p">(</span><span class="t-num">100</span><span class="t-p">):</span>
+    <span class="t-cm"># ... your training step ...</span>
+    train_losses<span class="t-p">.</span><span class="t-fn">append</span><span class="t-p">(</span>train_loss_this_epoch<span class="t-p">)</span>
+    val_losses<span class="t-p">.</span><span class="t-fn">append</span><span class="t-p">(</span>val_loss_this_epoch<span class="t-p">)</span>
+    cb<span class="t-p">.</span><span class="t-fn">on_epoch_end</span><span class="t-p">(</span>epoch<span class="t-p">,</span> train_losses<span class="t-p">,</span> val_losses<span class="t-p">)</span>
+
+<span class="t-cm"># Prints warnings in real-time once min_epochs is reached</span>
+<span class="t-cm"># Available in v0.3+</span></div>
+
+        <div id="tab-custom" class="ex-panel"><span class="t-kw">from</span> sk_autod.detectors.base <span class="t-kw">import</span> <span class="t-fn">BaseDetector</span>
+<span class="t-kw">from</span> sk_autod.core.report  <span class="t-kw">import</span> <span class="t-fn">Finding</span><span class="t-p">,</span> <span class="t-fn">Severity</span>
+
+<span class="t-kw">class</span> <span class="t-fn">HighFinalLoss</span><span class="t-p">(</span><span class="t-fn">BaseDetector</span><span class="t-p">):</span>
+    name <span class="t-p">=</span> <span class="t-str">"high_final_loss"</span>
+
+    <span class="t-kw">def</span> <span class="t-fn">detect</span><span class="t-p">(</span>self<span class="t-p">,</span> report<span class="t-p">):</span>
+        <span class="t-kw">if</span> report<span class="t-p">.</span>train_loss<span class="t-p">[-</span><span class="t-num">1</span><span class="t-p">] &gt;</span> <span class="t-num">1.0</span><span class="t-p">:</span>
+            <span class="t-kw">return</span> <span class="t-p">[</span><span class="t-fn">Finding</span><span class="t-p">(</span>
+                pattern<span class="t-p">=</span><span class="t-str">"high_final_loss"</span><span class="t-p">,</span>
+                severity<span class="t-p">=</span><span class="t-fn">Severity</span><span class="t-p">.</span>MEDIUM<span class="t-p">,</span>
+                confidence<span class="t-p">=</span><span class="t-num">0.8</span><span class="t-p">,</span>
+                fix<span class="t-p">=</span><span class="t-str">"Train longer or increase capacity."</span>
+            <span class="t-p">)]</span>
+        <span class="t-kw">return</span> <span class="t-p">[]</span>
+
+report <span class="t-p">=</span> <span class="t-fn">diagnose</span><span class="t-p">(</span>train_loss<span class="t-p">,</span> val_loss<span class="t-p">,</span>
+                   detectors<span class="t-p">=[</span><span class="t-fn">HighFinalLoss</span><span class="t-p">()])</span></div>
+
+        <div id="tab-cli" class="ex-panel"><span class="t-cm"># Diagnose from inline args</span>
+sk-autod diagnose \
+  --train-loss <span class="t-num">2.3 1.9 1.4 0.9 0.5 0.3 0.15</span> \
+  --val-loss   <span class="t-num">2.4 2.0 1.8 1.9 2.3 2.8 3.4</span>
+
+<span class="t-cm"># From CSV files</span>
+sk-autod diagnose \
+  --train-file <span class="t-str">train_losses.csv</span> \
+  --val-file   <span class="t-str">val_losses.csv</span>
+
+<span class="t-cm"># JSON output for CI pipelines</span>
+sk-autod diagnose --train-loss <span class="t-num">2.3 1.9</span> ... --output <span class="t-str">json</span>
+
+<span class="t-cm"># Pipe-friendly</span>
+echo <span class="t-str">"2.3 1.9 1.4 0.9"</span> | sk-autod diagnose --train-loss -</div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP / CHANGELOG -->
+<section id="roadmap">
+  <div class="container">
+    <div class="sec-tag reveal">roadmap</div>
+    <h2 class="reveal">What's coming.</h2>
+    <p class="sec-sub reveal">SK-AutoD is under active development. The API is stabilising fast.</p>
+
+    <div class="rm-list reveal" style="animation-delay:.06s">
+      <div class="rm-row">
+        <div class="rm-ver">v0.1.0</div>
+        <div class="rm-line"><div class="rm-dot done"></div></div>
+        <div class="rm-content">
+          <div class="rm-title">Foundation <span class="rm-status done">released</span></div>
+          <div class="rm-items">Core 5 detectors · CLI · Python API · 80%+ test coverage · PyPI publish</div>
+          <div class="rm-date">current</div>
+        </div>
+      </div>
+      <div class="rm-row">
+        <div class="rm-ver">v0.2.0</div>
+        <div class="rm-line"><div class="rm-dot now"></div></div>
+        <div class="rm-content">
+          <div class="rm-title">Full diagnostics <span class="rm-status now">in progress</span></div>
+          <div class="rm-items">All 10 detectors · JSON + HTML output · loss curve visualisation</div>
+          <div class="rm-date">May 2026</div>
+        </div>
+      </div>
+      <div class="rm-row">
+        <div class="rm-ver">v0.3.0</div>
+        <div class="rm-line"><div class="rm-dot"></div></div>
+        <div class="rm-content">
+          <div class="rm-title">Framework callbacks <span class="rm-status soon">planned</span></div>
+          <div class="rm-items">PyTorch + Keras callbacks · Jupyter magic integration · async support</div>
+          <div class="rm-date">Jun 2026</div>
+        </div>
+      </div>
+      <div class="rm-row">
+        <div class="rm-ver">v0.4.0</div>
+        <div class="rm-line"><div class="rm-dot"></div></div>
+        <div class="rm-content">
+          <div class="rm-title">Integrations <span class="rm-status soon">planned</span></div>
+          <div class="rm-items">Weights &amp; Biases + MLflow integrations · Adaptive thresholds</div>
+          <div class="rm-date">Jul 2026</div>
+        </div>
+      </div>
+      <div class="rm-row">
+        <div class="rm-ver">v1.0.0</div>
+        <div class="rm-line"><div class="rm-dot"></div></div>
+        <div class="rm-content">
+          <div class="rm-title">Stable release <span class="rm-status soon">planned</span></div>
+          <div class="rm-items">Stable public API · full documentation site · 100% test coverage</div>
+          <div class="rm-date">Aug 2026</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section id="install">
+  <div class="container">
+    <div class="sec-tag reveal">installation</div>
+    <h2 class="reveal">Two lines to your<br>first diagnosis.</h2>
+    <p class="sec-sub reveal">Requires Python 3.10+. NumPy and SciPy are the only dependencies.</p>
+
+    <div class="install-grid reveal" style="animation-delay:.06s">
+      <div>
+        <div class="install-block">
+          <div class="install-block-head">from PyPI (recommended)</div>
+          <div class="install-block-body">
+            <div class="cmd-row">
+              <span class="pmt">$</span>
+              <span class="cmd">pip install sk-autod</span>
+              <button class="copy-btn" onclick="cp('pip install sk-autod',this)">copy</button>
+            </div>
+            <div class="sep-or">or</div>
+            <div class="install-block-head" style="margin:-20px -20px 16px;border-top:1px solid var(--border)">from source</div>
+            <div class="cmd-row">
+              <span class="pmt">$</span>
+              <span class="cmd" style="word-break:break-all;font-size:11px">pip install git+https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician.git</span>
+              <button class="copy-btn" onclick="cp('pip install git+https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician.git',this)">copy</button>
+            </div>
+            <div class="install-note">Python ≥ 3.10 · NumPy · SciPy · MIT License</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+          <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician" target="_blank" class="btn btn-primary">View on GitHub ↗</a>
+          <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/issues" target="_blank" class="btn btn-ghost">Report issue</a>
+        </div>
+      </div>
+
+      <div class="qs-block">
+        <div class="qs-head">quick-start (30 seconds)</div>
+        <div class="qs-body"><span class="t-cm"># 1. Install</span>
+pip install sk-autod
+
+<span class="t-cm"># 2. Run in Python</span>
+<span class="t-kw">from</span> sk_autod <span class="t-kw">import</span> <span class="t-fn">diagnose</span>
+
+report <span class="t-p">=</span> <span class="t-fn">diagnose</span><span class="t-p">(</span>
+  train_loss<span class="t-p">=[</span><span class="t-num">2.3, 1.9, 1.4, 0.9, 0.5</span><span class="t-p">],</span>
+  val_loss  <span class="t-p">=[</span><span class="t-num">2.4, 2.0, 1.8, 1.9, 2.3</span><span class="t-p">]</span>
+<span class="t-p">)</span>
+report<span class="t-p">.</span><span class="t-fn">summary</span><span class="t-p">()</span>
+
+<span class="t-cm"># 3. Or use the CLI</span>
+sk-autod diagnose \
+  --train-loss <span class="t-num">2.3 1.9 1.4 0.9 0.5</span> \
+  --val-loss   <span class="t-num">2.4 2.0 1.8 1.9 2.3</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LINKS / RESOURCES -->
+<section id="links">
+  <div class="container">
+    <div class="sec-tag reveal">resources</div>
+    <h2 class="reveal">Everything you need.</h2>
+    <div class="links-grid reveal" style="animation-delay:.06s">
+      <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician" target="_blank" class="link-card">
+        <div class="link-card-icon">⇗</div>
+        <div class="link-card-title">GitHub Repository</div>
+        <div class="link-card-desc">Source code, issues, and pull requests. Star us if you find it useful.</div>
+      </a>
+      <a href="https://pypi.org/project/sk-autod" target="_blank" class="link-card">
+        <div class="link-card-icon">⬡</div>
+        <div class="link-card-title">PyPI Package</div>
+        <div class="link-card-desc">Download stats, release history, and package metadata on PyPI.</div>
+      </a>
+      <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/blob/main/CHANGELOG.md" target="_blank" class="link-card">
+        <div class="link-card-icon">◷</div>
+        <div class="link-card-title">Changelog</div>
+        <div class="link-card-desc">Version history, breaking changes, and migration notes.</div>
+      </a>
+      <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/blob/main/CONTRIBUTING.md" target="_blank" class="link-card">
+        <div class="link-card-icon">⊕</div>
+        <div class="link-card-title">Contributing</div>
+        <div class="link-card-desc">How to add detectors, report bugs, or improve documentation.</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- SITE MAP -->
+<section id="site-map">
+  <div class="container">
+    <div class="sec-tag reveal">site map</div>
+    <h2 class="reveal">Three pages, one experience.</h2>
+    <p class="sec-sub reveal">Use the homepage for the overview, docs for depth, and tutorial for the shortest path to first value.</p>
+    <div class="site-map-grid reveal" style="animation-delay:.06s">
+      <a class="site-map-card" href="index.html">
+        <div class="site-map-k">Home</div>
+        <div class="site-map-title">Product overview</div>
+        <div class="site-map-desc">See the pitch, key features, detector summary, examples, and install instructions.</div>
+      </a>
+      <a class="site-map-card" href="docs.html">
+        <div class="site-map-k">Docs</div>
+        <div class="site-map-title">Reference guide</div>
+        <div class="site-map-desc">Read the API, detector catalogue, installation, architecture, and FAQ.</div>
+      </a>
+      <a class="site-map-card" href="tutorial.html">
+        <div class="site-map-k">Tutorial</div>
+        <div class="site-map-title">Quick start</div>
+        <div class="site-map-desc">Install, diagnose, customize, and run from notebooks or the CLI.</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <div class="foot-logo">SK-AutoD</div>
+        <div class="foot-tagline">Auto-diagnose your ML training curves. Overfitting, gradient explosions, LR issues — caught before they cost you.</div>
+        <div class="foot-copy">MIT License 2026 Shamique Khan</div>
+      </div>
+      <div>
+        <div class="foot-col-title">Project</div>
+        <div class="foot-links">
+          <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician" target="_blank">GitHub</a>
+          <a href="https://pypi.org/project/sk-autod" target="_blank">PyPI</a>
+          <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/releases" target="_blank">Releases</a>
+          <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/blob/main/CHANGELOG.md" target="_blank">Changelog</a>
+        </div>
+      </div>
+      <div>
+        <div class="foot-col-title">Pages</div>
+        <div class="foot-links">
+          <a href="index.html">Home</a>
+          <a href="docs.html">Docs</a>
+          <a href="tutorial.html">Tutorial</a>
+          <a href="#examples">Examples</a>
+        </div>
+      </div>
+      <div>
+        <div class="foot-col-title">Contact</div>
+        <div class="foot-links">
+          <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/issues" target="_blank">Report a bug</a>
+          <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/issues" target="_blank">Feature request</a>
+          <a href="mailto:shamique.khan@outlook.com">Email author</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot-bottom">
+      <div class="foot-bottom-left">
+        <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/blob/main/LICENSE" target="_blank">MIT License</a>
+        <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/blob/main/SECURITY.md" target="_blank">Security</a>
+        <a href="https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician/blob/main/CODE_OF_CONDUCT.md" target="_blank">Code of Conduct</a>
+      </div>
+      <div class="foot-bottom-right">Built with Python NumPy SciPy</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── SCROLL REVEAL
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('v') });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// ── TABS
+function showTab(id, btn) {
+  document.querySelectorAll('.ex-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ex-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── COPY
+function cp(text, el) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = el.textContent;
+    el.textContent = 'copied!';
+    el.style.color = 'var(--accent)';
+    setTimeout(() => { el.textContent = orig; el.style.color = ''; }, 1800);
+  });
+}
+
+// ── NAV ACTIVE
+const secs = document.querySelectorAll('section[id]');
+const nls  = document.querySelectorAll('.nav-links a[href^="#"]');
+window.addEventListener('scroll', () => {
+  let cur = '';
+  secs.forEach(s => { if(window.scrollY >= s.offsetTop - 80) cur = s.id; });
+  nls.forEach(a => {
+    a.style.color = a.getAttribute('href') === '#' + cur ? 'var(--accent)' : '';
+  });
+}, { passive: true });
+</script>
+</body>
+</html>

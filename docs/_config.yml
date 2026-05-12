@@ -25,7 +25,7 @@ footer_content: "MIT License &copy; 2026 Shamique Khan. Built with <a href='http
 # GitHub edit link on every page
 gh_edit_link: true
 gh_edit_link_text: "Edit this page on GitHub"
-gh_edit_repository: "https://github.com/shamiquekhan/sk-autod"
+gh_edit_repository: "https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician"
 gh_edit_branch: "main"
 gh_edit_source: docs
 gh_edit_view_mode: "edit"
@@ -33,7 +33,7 @@ gh_edit_view_mode: "edit"
 # Aux links (top-right nav buttons)
 aux_links:
   "GitHub":
-    - "https://github.com/shamiquekhan/sk-autod"
+    - "https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician"
   "PyPI":
     - "https://pypi.org/project/sk-autod"
 

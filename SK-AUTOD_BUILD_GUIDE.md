@@ -778,7 +778,7 @@ if np.std(train_loss) < 1e-6:
 
 ### README.md
 ```markdown
-# SK-AutoD 🩺
+# SK-AutoD 
 
 Auto-diagnose your training curves.
 
@@ -1046,7 +1046,7 @@ This guide gives you everything needed to build SK-AutoD from scratch. The key t
 
 ---
 
-**Good luck! 🚀**
+**Good luck! **
 
 For updates, questions, or contributions:
 - GitHub: github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician

@@ -11,7 +11,7 @@ Auto-diagnose your ML training curves in seconds.
 {: .fs-6 .fw-300 }
 
 [Get started](guide/quickstart/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[View on GitHub](https://github.com/shamiquekhan/sk-autod){: .btn .fs-5 .mb-4 .mb-md-0 }
+[View on GitHub](https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ---
 

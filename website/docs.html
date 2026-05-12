@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SK-AutoD — Documentation</title>
+<meta name="description" content="Reference docs for SK-AutoD: API, detectors, CLI, and implementation notes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Instrument+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#F5F3EE;--bg1:#EFECEA;--bg2:#E8E4DF;--surface:#FFFFFF;--border:#DDD9D3;--border2:#C9C4BD;--text:#1A1A18;--text2:#3C3B38;--muted:#837F79;--muted2:#6B6762;--accent:#2D4A36;--accent2:#3D6349;--accent-l:rgba(45,74,54,.07);--accent-m:rgba(45,74,54,.12);--red:#8C2F2F;--blue:#2B4472;--green:#2D4A36;--mono:'JetBrains Mono',monospace;--body:'Instrument Sans',sans-serif;--display:'Cormorant',serif}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.container{max-width:1120px;margin:0 auto;padding:0 32px}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(245,243,238,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:56px;max-width:1120px;margin:0 auto;padding:0 32px}
+.nav-logo{font-family:var(--display);font-size:20px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:9px;letter-spacing:.01em}
+.nav-logo-mark{width:22px;height:22px;border:1.5px solid var(--accent);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--accent);font-weight:500;font-family:var(--mono)}
+.nav-links{display:flex;align-items:center;gap:2px;overflow:auto;white-space:nowrap}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:13px;padding:5px 12px;border-radius:5px;transition:color .15s,background .15s}
+.nav-links a:hover{color:var(--text);background:var(--bg2)}
+.nav-cta{background:var(--accent)!important;color:#F5F3EE!important;font-weight:500!important;padding:6px 16px!important}
+.nav-cta:hover{background:var(--accent2)!important}
+.page-hero{padding:132px 0 40px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(239,236,234,.65),rgba(245,243,238,0))}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);gap:48px;align-items:end}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+.eyebrow::before{content:'';width:18px;height:1px;background:var(--accent)}
+h1,h2,h3{font-family:var(--display);font-weight:500;letter-spacing:-.01em}
+h1{font-size:clamp(2.6rem,4vw,4.2rem);line-height:1.06;max-width:11ch}
+.hero-copy{color:var(--muted);font-size:16px;line-height:1.75;max-width:58ch;margin-top:16px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:5px;font-size:13.5px;font-weight:500;text-decoration:none;transition:all .15s;border:none;cursor:pointer}
+.btn-primary{background:var(--accent);color:#F5F3EE}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.hero-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.metric-k{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.metric-v{font-family:var(--display);font-size:1.65rem;color:var(--accent);line-height:1;margin-top:8px}
+.metric-d{font-size:12px;color:var(--muted);margin-top:4px}
+.doc-grid{display:grid;grid-template-columns:250px 1fr;gap:36px;align-items:start;padding:44px 0 96px}
+.sidebar{position:sticky;top:76px;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+.sidebar-head{padding:13px 16px;background:var(--bg1);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.sidebar a{display:block;padding:10px 16px;color:var(--text2);text-decoration:none;font-size:13px;border-left:2px solid transparent;transition:background .12s,color .12s}
+.sidebar a:hover{background:var(--bg1);color:var(--text)}
+.sidebar a.active{background:var(--accent-l);color:var(--accent);border-left-color:var(--accent)}
+.content{min-width:0}
+.section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px 28px 24px;box-shadow:0 1px 0 rgba(0,0,0,.02);margin-bottom:22px}
+.section h2{font-size:clamp(1.85rem,2.4vw,2.5rem);line-height:1.12;margin-bottom:10px}
+.section-lead{color:var(--muted);font-size:15px;line-height:1.75;max-width:68ch;margin-bottom:20px}
+.callout{border:1px solid var(--accent-m);background:var(--accent-l);border-radius:8px;padding:16px 18px;margin:18px 0;color:var(--muted2)}
+.callout strong{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.sig{background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:16px 18px;font-family:var(--mono);font-size:12.5px;line-height:1.7;color:var(--text2);overflow:auto}
+.sig .fn{color:#1F5C8C}.sig .typ{color:var(--muted)}.sig .ret{color:#3A6E30}.sig .cm{color:#AAA59E}.sig code{background:none;color:inherit;padding:0}
+.params{width:100%;border-collapse:collapse;margin-top:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:13px}
+.params thead{background:var(--bg1)}
+.params th{padding:10px 14px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;border-bottom:1px solid var(--border)}
+.params td{padding:12px 14px;vertical-align:top;border-bottom:1px solid var(--border)}
+.params tr:last-child td{border-bottom:none}
+.p-name{font-family:var(--mono);color:var(--accent)}
+.p-type{font-family:var(--mono);font-size:11.5px;color:var(--muted2)}
+.p-desc{color:var(--muted)}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.pill{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:999px;border:1px solid var(--border2);background:var(--bg1);color:var(--muted)}
+.card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
+.card{border:1px solid var(--border);background:linear-gradient(180deg,#fff,var(--bg1));border-radius:8px;padding:16px 16px 14px}
+.card h3{font-size:1.25rem;margin-bottom:8px}
+.card p{color:var(--muted);font-size:13.5px;line-height:1.7}
+.det-table{width:100%;border-collapse:collapse;margin-top:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.det-table th,.det-table td{padding:12px 14px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;font-size:13px}
+.det-table thead{background:var(--bg1)}
+.det-table th{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:400}
+.det-table tr:last-child td{border-bottom:none}
+.sev{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:500;font-family:var(--mono);letter-spacing:.04em;border:1px solid}
+.sev-crit{background:rgba(140,47,47,.06);color:#8C2F2F;border-color:rgba(140,47,47,.2)}
+.sev-high{background:rgba(140,74,30,.06);color:#7A3A12;border-color:rgba(140,74,30,.2)}
+.sev-med{background:rgba(122,96,24,.06);color:#6B5214;border-color:rgba(122,96,24,.2)}
+.sev-warn{background:rgba(43,68,114,.06);color:#2B4472;border-color:rgba(43,68,114,.2)}
+.list{display:grid;gap:10px;margin-top:10px}
+.list-item{display:grid;grid-template-columns:190px 1fr;gap:16px;padding:12px 0;border-bottom:1px solid var(--border);font-size:13px;align-items:baseline}
+.list-item:last-child{border-bottom:none}
+.list-name{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.list-desc{color:var(--muted)}
+.code{background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.7;color:var(--text2);overflow:auto}
+footer{padding:42px 0;border-top:1px solid var(--border);background:var(--bg1);color:var(--muted);font-family:var(--mono);font-size:12px;text-align:center}
+.footer-links{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-bottom:10px}
+.footer-links a{text-decoration:none;color:var(--muted2)}
+.footer-links a:hover{color:var(--accent)}
+@media (max-width:920px){.hero-grid,.doc-grid{grid-template-columns:1fr}.sidebar{position:static}.card-grid{grid-template-columns:1fr}.hero-metrics{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.container{padding:0 20px}.nav-inner{padding:0 20px}.nav-links a[href="#features"],.nav-links a[href="#detectors"],.nav-links a[href="#examples"],.nav-links a[href="#roadmap"]{display:none}.hero-metrics{grid-template-columns:1fr}.list-item{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo"><span class="nav-logo-mark">Rx</span>SK-AutoD</a>
+    <div class="nav-links">
+      <a href="index.html#features">Features</a>
+      <a href="index.html#detectors">Detectors</a>
+      <a href="docs.html">Docs</a>
+      <a href="tutorial.html">Tutorial</a>
+      <a href="index.html#examples">Examples</a>
+      <a href="index.html#install" class="nav-cta">Install</a>
+    </div>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">Documentation</div>
+        <h1>API reference, detectors, and implementation notes.</h1>
+        <p class="hero-copy">This page is built from the actual repo docs and gives you the parts you need to use, extend, and troubleshoot SK-AutoD without digging through the source tree.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="tutorial.html">Open tutorial</a>
+          <a class="btn btn-ghost" href="index.html">Back to home</a>
+        </div>
+      </div>
+      <div class="hero-metrics">
+        <div class="metric"><div class="metric-k">Public API</div><div class="metric-v">4</div><div class="metric-d">diagnose, quick_check, AutoDCallback, BaseDetector</div></div>
+        <div class="metric"><div class="metric-k">Built-in detectors</div><div class="metric-v">10</div><div class="metric-d">From overfitting to label noise floor</div></div>
+        <div class="metric"><div class="metric-k">Input format</div><div class="metric-v">2 arrays</div><div class="metric-d">train_loss and val_loss sequences</div></div>
+        <div class="metric"><div class="metric-k">Output formats</div><div class="metric-v">3</div><div class="metric-d">Text, JSON, HTML reports</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="doc-grid">
+      <aside class="sidebar">
+        <div class="sidebar-head">Contents</div>
+        <a href="#api">API reference</a>
+        <a href="#output">Outputs</a>
+        <a href="#detectors">Detector catalogue</a>
+        <a href="#custom">Custom detectors</a>
+        <a href="#cli">CLI</a>
+        <a href="#install">Installation</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#faq">FAQ</a>
+      </aside>
+
+      <main class="content">
+        <article class="section" id="api">
+          <div class="eyebrow">API reference</div>
+          <h2>Entry points that matter.</h2>
+          <p class="section-lead">The package is intentionally small. These are the APIs that the README, examples, and CLI all build on.</p>
+          <div class="sig"><span class="fn">diagnose(train_loss, val_loss, *, detectors=None)</span><br><span class="cm">Run the full diagnostics pipeline and return a</span> <span class="ret">DiagnosisReport</span>.</div>
+          <table class="params">
+            <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="p-name">train_loss</td><td class="p-type">Sequence[float]</td><td class="p-desc">Training loss values per epoch, at least 5 points recommended.</td></tr>
+              <tr><td class="p-name">val_loss</td><td class="p-type">Sequence[float]</td><td class="p-desc">Validation loss values per epoch, same length as training loss.</td></tr>
+              <tr><td class="p-name">detectors</td><td class="p-type">Optional[list[BaseDetector]]</td><td class="p-desc">Optional custom detectors to run alongside the built-in set.</td></tr>
+            </tbody>
+          </table>
+          <div class="card-grid">
+            <div class="card"><h3>DiagnosisReport</h3><p>Returned by <code>diagnose()</code>. Use it for text summaries, JSON serialization, or HTML reporting.</p></div>
+            <div class="card"><h3>Finding</h3><p>Represents a single issue with severity, confidence, message, recommendation, and epoch metadata.</p></div>
+          </div>
+        </article>
+
+        <article class="section" id="output">
+          <div class="eyebrow">Output formats</div>
+          <h2>Choose the format that fits the workflow.</h2>
+          <p class="section-lead">You can use the same report object in a notebook, in a CI job, or as a standalone HTML artifact.</p>
+          <div class="list">
+            <div class="list-item"><div class="list-name">Text</div><div class="list-desc">Formatted, human-readable summary from <code>summary()</code>.</div></div>
+            <div class="list-item"><div class="list-name">JSON</div><div class="list-desc">Programmatic access from <code>to_dict()</code> for logs, APIs, and pipelines.</div></div>
+            <div class="list-item"><div class="list-name">HTML</div><div class="list-desc">Standalone report from <code>to_html()</code> for interactive review.</div></div>
+          </div>
+          <div class="callout"><strong>Recommended flow</strong>Call <code>diagnose()</code>, inspect <code>report.findings</code>, then use <code>summary()</code> for terminal workflows and <code>to_html()</code> when you want a report you can share.</div>
+        </article>
+
+        <article class="section" id="detectors">
+          <div class="eyebrow">Detector catalogue</div>
+          <h2>What the library flags.</h2>
+          <p class="section-lead">These are the built-in patterns described in the repository docs and surfaced in the homepage table.</p>
+          <table class="det-table">
+            <thead><tr><th>Detector</th><th>Severity</th><th>Signal</th><th>Typical fix</th></tr></thead>
+            <tbody>
+              <tr><td>Classic overfitting</td><td><span class="sev sev-crit">critical</span></td><td>Validation loss rises while training loss falls.</td><td>Dropout, L2 regularization, reduce capacity.</td></tr>
+              <tr><td>Exploding gradient</td><td><span class="sev sev-crit">critical</span></td><td>Loss spikes sharply in a single epoch.</td><td>Gradient clipping, lower the learning rate.</td></tr>
+              <tr><td>Data leakage proxy</td><td><span class="sev sev-high">high</span></td><td>Validation loss is suspiciously lower than training loss.</td><td>Audit the train/validation split.</td></tr>
+              <tr><td>LR too high</td><td><span class="sev sev-high">high</span></td><td>Loss oscillates without a clear downtrend.</td><td>Reduce LR and add warmup.</td></tr>
+              <tr><td>Underfitting</td><td><span class="sev sev-high">high</span></td><td>Both losses plateau at high values.</td><td>Increase model capacity or train longer.</td></tr>
+              <tr><td>Dying ReLU proxy</td><td><span class="sev sev-high">high</span></td><td>Loss flatlines early at a high value.</td><td>Use LeakyReLU, He init, normalize inputs.</td></tr>
+              <tr><td>LR too low</td><td><span class="sev sev-med">medium</span></td><td>Loss decreases very slowly.</td><td>Increase LR or adjust the schedule.</td></tr>
+              <tr><td>Noisy training</td><td><span class="sev sev-med">medium</span></td><td>Jagged curve with frequent direction flips.</td><td>Increase batch size, add smoothing.</td></tr>
+              <tr><td>Label noise floor</td><td><span class="sev sev-med">medium</span></td><td>Loss cannot drop below a suspicious floor.</td><td>Inspect labels and clean the dataset.</td></tr>
+              <tr><td>Missed early stopping</td><td><span class="sev sev-warn">warning</span></td><td>The best validation point was not saved.</td><td>Enable EarlyStopping with restore_best_weights.</td></tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="section" id="custom">
+          <div class="eyebrow">Custom detectors</div>
+          <h2>Extend without fighting the framework.</h2>
+          <p class="section-lead">Custom detectors follow the same shape as the built-ins: inspect the preprocessed report and return findings when you match a pattern.</p>
+          <div class="sig"><span class="fn">class MyDetector(BaseDetector):</span><br>    <span class="cm">name = "my_custom_issue"</span><br><br>    <span class="fn">def detect(self, report):</span><br>        <span class="cm"># access report.train_loss, report.val_loss, and metadata</span><br>        <span class="cm">...</span></div>
+          <div class="callout"><strong>Design constraint</strong>Detectors should be deterministic, stateless, and fast. The repo architecture explicitly keeps detector logic pure so results are stable and debuggable.</div>
+        </article>
+
+        <article class="section" id="cli">
+          <div class="eyebrow">CLI</div>
+          <h2>Useful from terminal and CI.</h2>
+          <p class="section-lead">The command-line interface mirrors the Python API and is suited to quick inspections, scripts, and automated checks.</p>
+          <div class="code">sk-autod diagnose \
+  --train-loss 2.3 1.9 1.4 0.9 0.5 0.3 0.15 \
+  --val-loss   2.4 2.0 1.8 1.9 2.3 2.8 3.4 \
+  --output json</div>
+          <div class="list" style="margin-top:16px">
+            <div class="list-item"><div class="list-name">Files</div><div class="list-desc">Use <code>--train-file</code> and <code>--val-file</code> when your curves live in CSVs.</div></div>
+            <div class="list-item"><div class="list-name">Pipe-friendly</div><div class="list-desc">You can stream values into stdin for small shells or automation scripts.</div></div>
+          </div>
+        </article>
+
+        <article class="section" id="install">
+          <div class="eyebrow">Installation</div>
+          <h2>What the package expects.</h2>
+          <p class="section-lead">The project metadata targets Python 3.10+ and keeps dependencies light. Development extras are separated from runtime usage.</p>
+          <div class="card-grid">
+            <div class="card"><h3>Runtime</h3><p>Install from PyPI with <code>pip install sk-autod</code>. The package itself has no mandatory runtime dependencies declared in <code>pyproject.toml</code>.</p></div>
+            <div class="card"><h3>Development</h3><p>Use <code>pip install -e ".[dev]"</code> for tests, linting, and local package work.</p></div>
+          </div>
+        </article>
+
+        <article class="section" id="architecture">
+          <div class="eyebrow">Architecture</div>
+          <h2>How data moves through the system.</h2>
+          <p class="section-lead">The architecture document describes a simple pipeline: validate the curves, preprocess them, run detectors, deduplicate findings, then format output.</p>
+          <div class="sig">Input curves → Preprocessor → DiagnosisReport → Detectors → Deduplication → Severity sort → Formatter</div>
+        </article>
+
+        <article class="section" id="faq">
+          <div class="eyebrow">FAQ</div>
+          <h2>Common questions.</h2>
+          <div class="list">
+            <div class="list-item"><div class="list-name">Minimum length</div><div class="list-desc">The docs and architecture notes point to at least 5 epochs of curve history for meaningful detection.</div></div>
+            <div class="list-item"><div class="list-name">Supported workflows</div><div class="list-desc">Notebook checks, CLI diagnostics, CI output, and custom detector extensions are all first-class.</div></div>
+            <div class="list-item"><div class="list-name">Dependencies</div><div class="list-desc">The package is intentionally lightweight and is designed to stay easy to install in training environments.</div></div>
+          </div>
+        </article>
+      </main>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="docs.html">Docs</a>
+    <a href="tutorial.html">Tutorial</a>
+  </div>
+  © 2026 SK-AutoD. Built for fast, interpretable training-curve diagnostics.
+</footer>
+
+<script>
+const links=document.querySelectorAll('.sidebar a');
+const sections=[...links].map(link=>document.querySelector(link.getAttribute('href'))).filter(Boolean);
+const observer=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){links.forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+entry.target.id));}})}, {rootMargin:'-30% 0px -60% 0px', threshold:.01});
+sections.forEach(section=>observer.observe(section));
+</script>
+</body>
+</html>

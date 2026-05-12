@@ -17,7 +17,7 @@ Requires Python 3.10+.
 ## From source (development)
 
 ```bash
-git clone https://github.com/shamiquekhan/sk-autod.git
+git clone https://github.com/shamiquekhan/SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician.git
 cd sk-autod
 pip install -e ".[dev]"
 ```
