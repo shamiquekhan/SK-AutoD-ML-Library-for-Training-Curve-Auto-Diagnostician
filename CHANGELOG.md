@@ -4,6 +4,13 @@ All notable changes to SK-AutoD follow [Keep a Changelog](https://keepachangelog
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-05-12
+
+### Changed
+- Updated all repository URLs to full repository name (SK-AutoD-ML-Library-for-Training-Curve-Auto-Diagnostician)
+- Updated GitHub Pages deployment to use static HTML website
+- Updated PyPI publish workflow to use API token authentication
+
 ## [0.1.0] - 2026-05-11
 
 ### Added
